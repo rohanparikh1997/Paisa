@@ -498,7 +498,11 @@ function Dashboard({ onNav, onOpenAssistant }) {
 
       {/* Quick stats */}
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:14 }}>
-        <MiniStat icon="ArrowDown" tint="var(--saffron)" label="Today" value={D.inr(480+1299+220)} sub="3 transactions"/>
+        {(() => {
+          const today = D.TXNS[0]?.date;
+          const todayTxns = D.TXNS.filter(t => t.date === today);
+          return <MiniStat icon="ArrowDown" tint="var(--saffron)" label="Today" value={D.inr(todayTxns.reduce((s,t)=>s+t.amount,0))} sub={todayTxns.length + ' transactions'}/>;
+        })()}
         <MiniStat icon="TrendUp" tint="var(--green)" label="Avg / day" value={D.inr(Math.round(totalSpent/17))} sub="17 days"/>
       </div>
 
