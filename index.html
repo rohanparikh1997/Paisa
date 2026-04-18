@@ -2004,10 +2004,13 @@ function inferCategory(merchant) {
 
 async function bootstrap() {
   const scriptUrl = localStorage.getItem('paisa_script_url');
+  let status = 'no-url';
   if (scriptUrl && scriptUrl.startsWith('https://script.google.com')) {
+    status = 'fetching';
     try {
       const r = await fetch('/api/gmail?url=' + encodeURIComponent(scriptUrl));
       const data = await r.json();
+      window.__gmailRaw = data;
       const txns = (data.transactions || [])
         .filter(t => t.type === 'debit')
         .map((t, i) => ({
@@ -2021,11 +2024,22 @@ async function bootstrap() {
           note: t.subject || '',
           ref: t.ref || '',
         }));
-      if (txns.length) window.DATA.TXNS = txns;
+      if (txns.length) {
+        window.DATA.TXNS = txns;
+        status = 'loaded:' + txns.length;
+      } else {
+        status = 'empty:' + JSON.stringify(data).slice(0, 200);
+      }
     } catch (e) {
-      console.warn('Gmail sync failed:', e);
+      status = 'error:' + e.message;
     }
   }
+  window.__gmailStatus = status;
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#000;color:#0f0;font:11px monospace;padding:4px;z-index:99999;text-align:center;';
+  banner.textContent = 'Gmail: ' + status;
+  banner.onclick = () => banner.remove();
+  document.body.appendChild(banner);
   ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 }
 bootstrap();
