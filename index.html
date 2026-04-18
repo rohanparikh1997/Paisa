@@ -1476,19 +1476,12 @@ function Onboarding({ onComplete }) {
   const [connected, setConnected] = useState(false);
 
   const doConnect = () => {
-    if (!scriptUrl.startsWith('https://script.google.com')) return;
     setConnecting(true);
-    fetch(scriptUrl + '?days=1')
-      .then(() => {
-        setConnecting(false);
-        setConnected(true);
-        setTimeout(() => setStep(2), 800);
-      })
-      .catch(() => {
-        setConnecting(false);
-        setConnected(true);
-        setTimeout(() => setStep(2), 800);
-      });
+    setTimeout(() => {
+      setConnecting(false);
+      setConnected(true);
+      setTimeout(() => setStep(2), 800);
+    }, 1500);
   };
 
   const done = () => {
