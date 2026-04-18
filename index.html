@@ -1109,16 +1109,16 @@ function Settings({ onReset }) {
         background:'var(--surface)', borderRadius:'var(--r)', padding:'18px',
         marginBottom:14, border:'1px solid var(--hair)', display:'flex', alignItems:'center', gap:14
       }}>
-        <div style={{ width:52, height:52, borderRadius:'50%', background:'linear-gradient(135deg, var(--saffron), var(--saffron-ink))', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Baloo 2', cursive", fontSize:22, fontWeight:800 }}>A</div>
+        <div style={{ width:52, height:52, borderRadius:'50%', background:'linear-gradient(135deg, var(--saffron), var(--saffron-ink))', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Baloo 2', cursive", fontSize:22, fontWeight:800 }}>{(localStorage.getItem('paisa_email') || 'Y')[0].toUpperCase()}</div>
         <div style={{ flex:1 }}>
-          <div style={{ fontSize:15, fontWeight:700, color:'var(--ink)' }}>Arjun Sharma</div>
-          <div style={{ fontSize:12, color:'var(--muted)' }}>arjun@gmail.com</div>
+          <div style={{ fontSize:15, fontWeight:700, color:'var(--ink)' }}>{(localStorage.getItem('paisa_email') || 'you@gmail.com').split('@')[0]}</div>
+          <div style={{ fontSize:12, color:'var(--muted)' }}>{localStorage.getItem('paisa_email') || 'you@gmail.com'}</div>
         </div>
         <I.ChevronRight size={18} stroke="var(--muted)"/>
       </div>
 
       <SettingsGroup title="Connected">
-        <SettingRow icon="GmailLogo" label="Gmail" value="arjun@gmail.com · synced 2m ago" chev/>
+        <SettingRow icon="GmailLogo" label="Gmail" value={(localStorage.getItem('paisa_email') || 'you@gmail.com') + ' · synced'} chev/>
         <SettingRow icon="Key" label="AI assistant" value="Connected · Claude" chev/>
       </SettingsGroup>
 
