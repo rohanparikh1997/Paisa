@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Paisa — आपका पैसा, साफ़ दिखे</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Base palette shared across themes */
+    --saffron: #FF6B35;
+    --saffron-ink: #E8551F;
+    --saffron-pale: #FFF1EB;
+    --green: #16A668;
+    --green-pale: #E4F6EC;
+    --red: #E04B3E;
+    --red-pale: #FDECEA;
+    --amber: #F5A623;
+    --amber-pale: #FFF4E0;
+
+    /* Light theme (default) */
+    --bg: #F5F6FA;
+    --surface: #FFFFFF;
+    --surface-2: #FAFBFD;
+    --ink: #0F1226;
+    --ink-2: #2B2F4C;
+    --muted: #6B7089;
+    --hair: #EAECF3;
+    --chip: #F1F3F9;
+    --navy: #0F1226;
+
+    --shadow-1: 0 1px 2px rgba(15,18,38,.04), 0 2px 8px rgba(15,18,38,.05);
+    --shadow-2: 0 4px 16px rgba(15,18,38,.08);
+    --shadow-3: 0 12px 36px rgba(15,18,38,.14);
+    --r: 20px;
+    --rs: 14px;
+  }
+  [data-theme="dark"] {
+    --bg: #0B0D1C;
+    --surface: #15182C;
+    --surface-2: #1B1F37;
+    --ink: #F3F4FA;
+    --ink-2: #D7DAE8;
+    --muted: #8B90AE;
+    --hair: #232744;
+    --chip: #1E2240;
+    --navy: #000;
+    --shadow-1: 0 1px 2px rgba(0,0,0,.3), 0 2px 8px rgba(0,0,0,.35);
+    --shadow-2: 0 6px 20px rgba(0,0,0,.4);
+    --shadow-3: 0 14px 40px rgba(0,0,0,.55);
+  }
+  [data-accent="indigo"] { --saffron:#5B6CFF; --saffron-ink:#4453D9; --saffron-pale:#ECEEFF; }
+  [data-accent="teal"]   { --saffron:#0EA5A3; --saffron-ink:#0A8685; --saffron-pale:#E0F5F4; }
+  [data-accent="magenta"]{ --saffron:#D93C7A; --saffron-ink:#B62F65; --saffron-pale:#FCE7EF; }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin:0; padding:0; }
+  body {
+    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    background: radial-gradient(1200px 800px at 30% -10%, #1a1f45 0%, #0b0d1c 55%, #07081a 100%);
+    color: #fff;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* STAGE — phone + side panel for the floating assistant demo */
+  .stage {
+    position: fixed; inset: 0;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    justify-items: center;
+    padding: 24px;
+    gap: 24px;
+  }
+  .stage-left, .stage-right {
+    display: flex; flex-direction: column; gap: 12px;
+    max-width: 280px;
+    color: rgba(255,255,255,.75);
+  }
+  .stage-right { align-items: flex-start; }
+  .stage-left { align-items: flex-end; text-align: right; }
+  .brand-mark {
+    font-family: 'Baloo 2', cursive;
+    font-size: 34px; font-weight: 800;
+    color: #fff; letter-spacing: -0.5px; line-height: 1;
+  }
+  .brand-mark span { color: var(--saffron); }
+  .brand-tagline {
+    font-size: 13px; color: rgba(255,255,255,.55);
+    letter-spacing: 0.2px; font-weight: 500;
+  }
+  .hint-card {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px; padding: 12px 14px;
+    font-size: 12px; line-height: 1.55;
+    color: rgba(255,255,255,.7);
+    backdrop-filter: blur(10px);
+  }
+  .hint-card b { color: #fff; font-weight: 600; }
+  .hint-card kbd {
+    font-family: inherit; font-size: 11px;
+    background: rgba(255,255,255,.1);
+    padding: 1px 6px; border-radius: 4px;
+    color: #fff;
+  }
+
+  /* PHONE FRAME — Android / Pixel-style */
+  .phone-wrap {
+    width: 390px; height: 820px;
+    position: relative;
+    filter: drop-shadow(0 30px 60px rgba(0,0,0,.45));
+  }
+  .phone {
+    width: 100%; height: 100%;
+    background: #111425;
+    border-radius: 42px;
+    padding: 10px;
+    position: relative;
+  }
+  .phone::before {
+    content: ''; position: absolute; inset: 0;
+    border-radius: 42px;
+    border: 1px solid rgba(255,255,255,.08);
+    pointer-events: none;
+  }
+  .screen {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    border-radius: 32px;
+    overflow: hidden;
+    position: relative;
+    display: flex; flex-direction: column;
+    color: var(--ink);
+  }
+  /* status bar */
+  .statusbar {
+    height: 32px;
+    padding: 8px 24px 0 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; font-weight: 600;
+    color: var(--ink);
+    background: var(--bg);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 5;
+  }
+  .statusbar .icons { display: flex; gap: 6px; align-items: center; }
+  .statusbar svg { display: block; }
+  /* camera cutout */
+  .cutout {
+    position: absolute; top: 8px; left: 50%;
+    transform: translateX(-50%);
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #000;
+    z-index: 6;
+  }
+
+  .app-body {
+    flex: 1; min-height: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .nav-hint {
+    height: 22px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+  }
+  .nav-hint::after {
+    content: ''; width: 128px; height: 4px;
+    background: var(--ink); opacity: .5;
+    border-radius: 2px;
+  }
+
+  /* ---------- Tweaks panel ---------- */
+  .tweaks-panel {
+    position: fixed;
+    right: 20px; bottom: 20px;
+    width: 260px;
+    background: #15182C;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.5);
+    font-size: 13px;
+    z-index: 1000;
+    display: none;
+  }
+  .tweaks-panel.open { display: block; }
+  .tweaks-title {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .8px;
+    color: rgba(255,255,255,.5);
+    margin-bottom: 10px;
+  }
+  .tweaks-row {
+    display: flex; gap: 6px;
+    margin-bottom: 12px;
+  }
+  .tweak-btn {
+    flex: 1; padding: 8px 10px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.08);
+    color: rgba(255,255,255,.8);
+    border-radius: 10px;
+    font: inherit; font-size: 12px; font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .tweak-btn.active {
+    background: var(--saffron);
+    color: #fff;
+    border-color: var(--saffron);
+  }
+  .swatch {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform .15s;
+  }
+  .swatch.active { border-color: #fff; transform: scale(1.05); }
+
+  /* Hide scrollbars but keep scrolling */
+  .scroll::-webkit-scrollbar { display: none; }
+  .scroll { scrollbar-width: none; }
+
+  @media (max-width: 900px) {
+    .stage-left, .stage-right { display: none; }
+    .stage { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<!-- React + Babel -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+
+<!-- icons.jsx -->
+<script type="text/babel" data-presets="react">
+// Clean line icons — 1.75px stroke, 24x24 viewBox
+const I = {};
+
+const mk = (path, fill) => ({ stroke = 'currentColor', size = 20, strokeWidth = 1.75, ...p }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={fill || 'none'} stroke={fill ? 'none' : stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" {...p}>
+    {path}
+  </svg>
+);
+
+I.Home = mk(<><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/><path d="M10 20v-5h4v5"/></>);
+I.Chart = mk(<><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></>);
+I.List = mk(<><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></>);
+I.Wallet = mk(<><path d="M3 7v11a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-3"/><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3"/><path d="M21 10h-5a2 2 0 0 0 0 4h5a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1Z"/><circle cx="16.5" cy="12" r="0.75" fill="currentColor" stroke="none"/></>);
+I.Settings = mk(<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></>);
+I.Plus = mk(<><path d="M12 5v14"/><path d="M5 12h14"/></>);
+I.Sparkles = mk(<><path d="M12 3v4"/><path d="M12 17v4"/><path d="M3 12h4"/><path d="M17 12h4"/><path d="M6.5 6.5 9 9"/><path d="m15 15 2.5 2.5"/><path d="M6.5 17.5 9 15"/><path d="m15 9 2.5-2.5"/></>);
+I.ArrowUp = mk(<><path d="M7 17 17 7"/><path d="M7 7h10v10"/></>);
+I.ArrowDown = mk(<><path d="M17 7 7 17"/><path d="M17 17H7V7"/></>);
+I.Search = mk(<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>);
+I.Filter = mk(<><path d="M3 5h18"/><path d="M6 12h12"/><path d="M10 19h4"/></>);
+I.Mail = mk(<><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></>);
+I.Check = mk(<><path d="M20 6 9 17l-5-5"/></>);
+I.X = mk(<><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>);
+I.Bell = mk(<><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></>);
+I.Send = mk(<><path d="m22 2-7 20-4-9-9-4 20-7Z"/><path d="M22 2 11 13"/></>);
+I.ChevronRight = mk(<><path d="m9 18 6-6-6-6"/></>);
+I.ChevronLeft = mk(<><path d="m15 18-6-6 6-6"/></>);
+I.Lock = mk(<><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></>);
+I.Key = mk(<><circle cx="8" cy="15" r="4"/><path d="m21 2-10.5 10.5"/><path d="m18 5 3 3"/><path d="m13 10 2 2"/></>);
+I.TrendUp = mk(<><path d="m3 17 6-6 4 4 8-8"/><path d="M14 7h7v7"/></>);
+I.TrendDown = mk(<><path d="m3 7 6 6 4-4 8 8"/><path d="M14 17h7v-7"/></>);
+I.Target = mk(<><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></>);
+I.Shield = mk(<><path d="M12 2 4 5v7c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V5l-8-3Z"/></>);
+I.Refresh = mk(<><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M3 21v-5h5"/></>);
+I.Info = mk(<><circle cx="12" cy="12" r="9"/><path d="M12 16v-4"/><path d="M12 8h.01"/></>);
+I.Edit = mk(<><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></>);
+I.Trash = mk(<><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></>);
+I.Download = mk(<><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></>);
+I.User = mk(<><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></>);
+
+// Filled brand icons
+I.GmailLogo = ({ size = 22 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path d="M3 6.5v11A1.5 1.5 0 0 0 4.5 19H6V9.5l6 4.5 6-4.5V19h1.5a1.5 1.5 0 0 0 1.5-1.5v-11L12 13 3 6.5Z" fill="#EA4335"/>
+    <path d="M3 6.5 12 13l9-6.5V6a1 1 0 0 0-1.58-.81L12 10.5 4.58 5.19A1 1 0 0 0 3 6v.5Z" fill="#C5221F"/>
+  </svg>
+);
+
+// Category icons (filled circles with mono glyph)
+I.CatFood = mk(<><path d="M4 3v7a3 3 0 0 0 3 3v8"/><path d="M7 3v7"/><path d="M10 3v7a3 3 0 0 1-3 3"/><path d="M17 21V5a3 3 0 0 1 3-3v19"/></>);
+I.CatShopping = mk(<><path d="M5 7h14l-1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 7Z"/><path d="M9 11V7a3 3 0 0 1 6 0v4"/></>);
+I.CatTransport = mk(<><rect x="4" y="8" width="16" height="10" rx="2"/><path d="M7 8V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/><circle cx="8" cy="14" r="1" fill="currentColor" stroke="none"/><circle cx="16" cy="14" r="1" fill="currentColor" stroke="none"/><path d="M5 21v-2"/><path d="M19 21v-2"/></>);
+I.CatEntertainment = mk(<><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3V9Z"/></>);
+I.CatHome = mk(<><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></>);
+I.CatGrocery = mk(<><path d="M3 5h2l2 12h11l2-8H6"/><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/></>);
+I.CatHealth = mk(<><path d="M12 21s-8-4.5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.5-8 11-10 11"/><path d="M12 9v5"/><path d="M9.5 11.5h5"/></>);
+I.CatBills = mk(<><path d="M4 3h16v18l-4-2-4 2-4-2-4 2V3Z"/><path d="M8 9h8"/><path d="M8 13h5"/></>);
+
+window.I = I;
+
+</script>
+
+<!-- data.jsx -->
+<script type="text/babel" data-presets="react">
+// Sample data for the prototype
+const inr = (n) => '₹' + Math.abs(Math.round(n)).toLocaleString('en-IN');
+const inrDecimal = (n) => '₹' + Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const CATEGORIES = [
+  { key: 'Food',          icon: 'CatFood',          tint: '#FF6B35', pale: '#FFF1EB' },
+  { key: 'Shopping',      icon: 'CatShopping',      tint: '#8B5CF6', pale: '#F2EDFE' },
+  { key: 'Transport',     icon: 'CatTransport',     tint: '#06A4E8', pale: '#E3F3FD' },
+  { key: 'Entertainment', icon: 'CatEntertainment', tint: '#D93C7A', pale: '#FCE7EF' },
+  { key: 'Groceries',     icon: 'CatGrocery',       tint: '#16A668', pale: '#E4F6EC' },
+  { key: 'Bills',         icon: 'CatBills',         tint: '#F5A623', pale: '#FFF4E0' },
+  { key: 'Health',        icon: 'CatHealth',        tint: '#E04B3E', pale: '#FDECEA' },
+  { key: 'Rent',          icon: 'CatHome',          tint: '#0EA5A3', pale: '#E0F5F4' },
+];
+const CAT = Object.fromEntries(CATEGORIES.map(c => [c.key, c]));
+
+// Budgets (per category, ₹)
+const BUDGETS = {
+  Food:          8000,
+  Shopping:      5000,
+  Transport:     3000,
+  Entertainment: 2500,
+  Groceries:     6000,
+  Bills:         7000,
+  Health:        2000,
+  Rent:         22000,
+};
+
+// Transactions — parsed from Gmail (mock). April 2026.
+const TXNS = [
+  { id: 1, merchant: 'Zomato',         cat: 'Food',          amount: 480,   date: '2026-04-17', bank: 'HDFC', src: 'gmail', note: 'Biryani Blues · Koramangala', ref: 'UPI/P2M/6342' },
+  { id: 2, merchant: 'Amazon',         cat: 'Shopping',      amount: 1299,  date: '2026-04-17', bank: 'ICICI', src: 'gmail', note: 'Bluetooth earphones', ref: 'ORD-782156' },
+  { id: 3, merchant: 'Uber',           cat: 'Transport',     amount: 220,   date: '2026-04-17', bank: 'HDFC', src: 'gmail', note: 'Ride to Indiranagar', ref: 'UPI/P2M/6340' },
+  { id: 4, merchant: 'BESCOM',         cat: 'Bills',         amount: 1850,  date: '2026-04-16', bank: 'HDFC', src: 'gmail', note: 'Electricity bill · Apr', ref: 'BILL/834' },
+  { id: 5, merchant: 'Swiggy Instamart',cat: 'Groceries',    amount: 742,   date: '2026-04-16', bank: 'ICICI', src: 'gmail', note: 'Weekly groceries', ref: 'UPI/P2M/1200' },
+  { id: 6, merchant: 'BookMyShow',     cat: 'Entertainment', amount: 680,   date: '2026-04-15', bank: 'HDFC', src: 'gmail', note: 'Movie · PVR Forum', ref: 'BMS-33812' },
+  { id: 7, merchant: 'Starbucks',      cat: 'Food',          amount: 385,   date: '2026-04-15', bank: 'HDFC', src: 'gmail', note: 'Americano + Croissant', ref: 'UPI/P2M/6301' },
+  { id: 8, merchant: 'Apollo Pharmacy',cat: 'Health',        amount: 420,   date: '2026-04-14', bank: 'ICICI', src: 'gmail', note: 'Prescription refill', ref: 'APOL-122' },
+  { id: 9, merchant: 'Netflix',        cat: 'Entertainment', amount: 649,   date: '2026-04-14', bank: 'HDFC', src: 'gmail', note: 'Monthly subscription', ref: 'NFX-APR26' },
+  { id:10, merchant: 'Uber',           cat: 'Transport',     amount: 340,   date: '2026-04-13', bank: 'HDFC', src: 'gmail', note: 'Airport drop', ref: 'UPI/P2M/6280' },
+  { id:11, merchant: 'Zepto',          cat: 'Groceries',     amount: 512,   date: '2026-04-13', bank: 'ICICI', src: 'gmail', note: 'Fruits + Bread', ref: 'ZEP-9912' },
+  { id:12, merchant: 'Zomato',         cat: 'Food',          amount: 620,   date: '2026-04-12', bank: 'HDFC', src: 'gmail', note: 'Dinner · Truffles', ref: 'UPI/P2M/6245' },
+  { id:13, merchant: 'Amazon',         cat: 'Shopping',      amount: 2490,  date: '2026-04-12', bank: 'ICICI', src: 'gmail', note: 'Running shoes', ref: 'ORD-771240' },
+  { id:14, merchant: 'Airtel',         cat: 'Bills',         amount: 799,   date: '2026-04-11', bank: 'HDFC', src: 'gmail', note: 'Mobile recharge', ref: 'ATL-7781' },
+  { id:15, merchant: 'Landlord',       cat: 'Rent',          amount: 22000, date: '2026-04-05', bank: 'HDFC', src: 'gmail', note: 'Apartment · April', ref: 'NEFT/RENT' },
+  { id:16, merchant: 'Cult.fit',       cat: 'Health',        amount: 1499,  date: '2026-04-04', bank: 'ICICI', src: 'gmail', note: 'Gym membership', ref: 'CULT-8821' },
+  { id:17, merchant: 'Blinkit',        cat: 'Groceries',     amount: 340,   date: '2026-04-03', bank: 'HDFC', src: 'gmail', note: 'Late-night snacks', ref: 'BLK-552' },
+  { id:18, merchant: 'Zomato',         cat: 'Food',          amount: 295,   date: '2026-04-02', bank: 'HDFC', src: 'gmail', note: 'Lunch · McDonald\'s', ref: 'UPI/P2M/6122' },
+  { id:19, merchant: 'Myntra',         cat: 'Shopping',      amount: 1650,  date: '2026-04-01', bank: 'ICICI', src: 'gmail', note: 'Summer t-shirts', ref: 'MYN-44103' },
+  { id:20, merchant: 'Spotify',        cat: 'Entertainment', amount: 119,   date: '2026-04-01', bank: 'HDFC', src: 'gmail', note: 'Premium · monthly', ref: 'SPT-APR' },
+];
+
+// 7-day spending for sparkline
+const WEEK = [
+  { d: 'Fri', v: 820 },
+  { d: 'Sat', v: 1240 },
+  { d: 'Sun', v: 1890 },
+  { d: 'Mon', v: 650 },
+  { d: 'Tue', v: 1100 },
+  { d: 'Wed', v: 520 },
+  { d: 'Thu', v: 1999 },
+];
+
+const DATA = { CATEGORIES, CAT, BUDGETS, TXNS, WEEK, inr, inrDecimal };
+window.DATA = DATA;
+
+// ---------- Computed helpers ----------
+function monthSpend(txns) {
+  return txns.reduce((s, t) => s + t.amount, 0);
+}
+function byCategory(txns) {
+  const m = {};
+  txns.forEach(t => { m[t.cat] = (m[t.cat] || 0) + t.amount; });
+  return m;
+}
+function groupByDate(txns) {
+  const m = {};
+  txns.forEach(t => {
+    if (!m[t.date]) m[t.date] = [];
+    m[t.date].push(t);
+  });
+  return Object.entries(m).sort((a,b) => b[0].localeCompare(a[0]));
+}
+function formatDate(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  const today = new Date('2026-04-17T00:00:00');
+  const diff = Math.round((today - d) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Yesterday';
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+window.DATA.monthSpend = monthSpend;
+window.DATA.byCategory = byCategory;
+window.DATA.groupByDate = groupByDate;
+window.DATA.formatDate = formatDate;
+
+</script>
+
+<!-- screens.jsx -->
+<script type="text/babel" data-presets="react">
+// Main screens: Dashboard, Transactions, Budget, Insights, Settings
+const { useState: useS, useMemo, useEffect: useE, useRef } = React;
+
+function AppScreens({ active, onNav, onOpenAssistant, onReset }) {
+  return (
+    <>
+      <div style={{ display: active === 'home' ? 'flex' : 'none', flexDirection:'column', height:'100%' }}>
+        <Dashboard onNav={onNav} onOpenAssistant={onOpenAssistant}/>
+      </div>
+      <div style={{ display: active === 'txns' ? 'flex' : 'none', flexDirection:'column', height:'100%' }}>
+        <Transactions/>
+      </div>
+      <div style={{ display: active === 'budget' ? 'flex' : 'none', flexDirection:'column', height:'100%' }}>
+        <Budget/>
+      </div>
+      <div style={{ display: active === 'insights' ? 'flex' : 'none', flexDirection:'column', height:'100%' }}>
+        <Insights/>
+      </div>
+      <div style={{ display: active === 'settings' ? 'flex' : 'none', flexDirection:'column', height:'100%' }}>
+        <Settings onReset={onReset}/>
+      </div>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────
+// DASHBOARD
+// ─────────────────────────────────────────────
+function Dashboard({ onNav, onOpenAssistant }) {
+  const I = window.I, D = window.DATA;
+  const totalSpent = D.monthSpend(D.TXNS);
+  const totalBudget = Object.values(D.BUDGETS).reduce((a,b)=>a+b,0);
+  const pct = Math.round((totalSpent/totalBudget)*100);
+  const remaining = totalBudget - totalSpent;
+  const byCat = D.byCategory(D.TXNS);
+
+  return (
+    <div className="scroll" style={{ flex:1, overflowY:'auto', padding:'12px 16px 24px' }}>
+      <Header greeting="Good evening" subtitle="Here's your money today" onOpenAssistant={onOpenAssistant}/>
+
+      {/* HERO — budget card */}
+      <div style={{
+        background: 'linear-gradient(135deg, var(--ink) 0%, #1E2240 100%)',
+        borderRadius: 'var(--r)', padding: '22px 20px',
+        marginBottom: 14,
+        position:'relative', overflow:'hidden',
+        color:'#fff'
+      }}>
+        <div style={{
+          position:'absolute', right:-40, top:-40,
+          width:180, height:180, borderRadius:'50%',
+          background:'radial-gradient(circle, var(--saffron) 0%, transparent 70%)',
+          opacity:.25
+        }}/>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:14, position:'relative' }}>
+          <div>
+            <div style={{ fontSize:11, fontWeight:700, color:'rgba(255,255,255,.55)', textTransform:'uppercase', letterSpacing:'.8px', marginBottom:4 }}>Spent this month</div>
+            <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:36, fontWeight:800, letterSpacing:'-0.5px', lineHeight:1 }}>
+              {D.inr(totalSpent)}
+            </div>
+            <div style={{ fontSize:13, color:'rgba(255,255,255,.6)', marginTop:6 }}>
+              of {D.inr(totalBudget)} budget · <span style={{ color: pct > 85 ? '#FF8F65' : '#6FE0A6', fontWeight:600 }}>{pct}%</span>
+            </div>
+          </div>
+          <div style={{
+            background:'rgba(255,255,255,.1)', border:'1px solid rgba(255,255,255,.15)',
+            borderRadius: 12, padding:'6px 10px',
+            display:'flex', alignItems:'center', gap:6,
+            fontSize:11, fontWeight:600, color:'rgba(255,255,255,.85)'
+          }}>
+            <div style={{ width:6, height:6, borderRadius:'50%', background:'#6FE0A6', boxShadow:'0 0 8px #6FE0A6' }}/>
+            Synced
+          </div>
+        </div>
+
+        {/* Stacked budget bar */}
+        <StackedBar txns={D.TXNS} total={totalBudget}/>
+
+        <div style={{ display:'flex', justifyContent:'space-between', marginTop:14, fontSize:12, color:'rgba(255,255,255,.65)' }}>
+          <span>₹{Math.round(remaining/1000)}K remaining</span>
+          <span>{new Date('2026-04-30').getDate() - 17} days left</span>
+        </div>
+      </div>
+
+      {/* Quick stats */}
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:14 }}>
+        <MiniStat icon="ArrowDown" tint="var(--saffron)" label="Today" value={D.inr(480+1299+220)} sub="3 transactions"/>
+        <MiniStat icon="TrendUp" tint="var(--green)" label="Avg / day" value={D.inr(Math.round(totalSpent/17))} sub="17 days"/>
+      </div>
+
+      {/* 7-day chart */}
+      <Card title="Last 7 days" right={<span style={{ fontSize:12, color:'var(--muted)' }}>{D.inr(D.WEEK.reduce((s,d)=>s+d.v,0))}</span>}>
+        <WeekChart/>
+      </Card>
+
+      {/* Categories */}
+      <Card title="Where it went" right={<button onClick={() => onNav('budget')} style={linkBtn}>View all <I.ChevronRight size={14}/></button>}>
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          {Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([cat, spent]) => {
+            const c = D.CAT[cat], budget = D.BUDGETS[cat];
+            const p = Math.min(100, (spent/budget)*100);
+            return (
+              <div key={cat}>
+                <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6 }}>
+                  <CatBadge cat={cat} size={32}/>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:14, fontWeight:600, color:'var(--ink)' }}>{cat}</div>
+                  </div>
+                  <div style={{ textAlign:'right' }}>
+                    <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:15, fontWeight:700, color:'var(--ink)' }}>{D.inr(spent)}</div>
+                    <div style={{ fontSize:11, color:'var(--muted)' }}>of {D.inr(budget)}</div>
+                  </div>
+                </div>
+                <div style={{ height:6, background:'var(--chip)', borderRadius:99, overflow:'hidden' }}>
+                  <div style={{ width:p+'%', height:'100%', background: p > 95 ? 'var(--red)' : c.tint, borderRadius:99, transition:'width .6s' }}/>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* Recent */}
+      <Card title="Recent" right={<button onClick={() => onNav('txns')} style={linkBtn}>See all <I.ChevronRight size={14}/></button>}>
+        <div style={{ display:'flex', flexDirection:'column' }}>
+          {D.TXNS.slice(0,5).map((t,i) => (
+            <TxnRow key={t.id} txn={t} divider={i < 4}/>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function Header({ greeting, subtitle, onOpenAssistant }) {
+  const I = window.I;
+  return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 4px 18px' }}>
+      <div>
+        <div style={{ fontSize:13, color:'var(--muted)', fontWeight:500 }}>{greeting}</div>
+        <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:22, fontWeight:800, color:'var(--ink)', letterSpacing:'-0.3px' }}>{subtitle}</div>
+      </div>
+      <div style={{ display:'flex', gap:8 }}>
+        <button style={circleBtn}><I.Bell size={18} stroke="var(--ink)"/></button>
+        <button onClick={onOpenAssistant} style={{
+          ...circleBtn,
+          background:'var(--saffron)',
+          color:'#fff',
+          boxShadow:'0 6px 18px -6px var(--saffron)'
+        }}>
+          <I.Sparkles size={18} stroke="#fff"/>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MiniStat({ icon, tint, label, value, sub }) {
+  const I = window.I;
+  const Ico = I[icon];
+  return (
+    <div style={{
+      background:'var(--surface)', borderRadius: 'var(--rs)', padding: '14px',
+      boxShadow:'var(--shadow-1)', border:'1px solid var(--hair)'
+    }}>
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
+        <div style={{
+          width:28, height:28, borderRadius:9,
+          background: 'color-mix(in oklab, '+tint+' 14%, transparent)',
+          color: tint,
+          display:'flex', alignItems:'center', justifyContent:'center'
+        }}>
+          <Ico size={16}/>
+        </div>
+        <span style={{ fontSize:11, fontWeight:700, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.6px' }}>{label}</span>
+      </div>
+      <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:22, fontWeight:800, color:'var(--ink)', lineHeight:1 }}>{value}</div>
+      <div style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}>{sub}</div>
+    </div>
+  );
+}
+
+function Card({ title, right, children, style }) {
+  return (
+    <div style={{
+      background:'var(--surface)', borderRadius: 'var(--r)',
+      padding: '16px', marginBottom: 14,
+      boxShadow:'var(--shadow-1)', border:'1px solid var(--hair)',
+      ...style
+    }}>
+      {(title || right) && (
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: 14 }}>
+          <div style={{ fontSize:14, fontWeight:700, color:'var(--ink)', letterSpacing:'-0.1px' }}>{title}</div>
+          {right}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
+
+function CatBadge({ cat, size = 36 }) {
+  const I = window.I;
+  const c = window.DATA.CAT[cat];
+  const Ico = I[c.icon];
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: size * 0.33,
+      background: c.pale, color: c.tint,
+      display:'flex', alignItems:'center', justifyContent:'center',
+      flexShrink: 0
+    }}>
+      <Ico size={size * 0.55}/>
+    </div>
+  );
+}
+
+function StackedBar({ txns, total }) {
+  const D = window.DATA;
+  const byCat = D.byCategory(txns);
+  const entries = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  const spent = entries.reduce((s,[,v])=>s+v,0);
+  return (
+    <div style={{ height:12, background:'rgba(255,255,255,.08)', borderRadius:99, overflow:'hidden', display:'flex', gap:2 }}>
+      {entries.map(([cat, v]) => (
+        <div key={cat} title={cat} style={{
+          width: (v/total)*100 + '%',
+          background: D.CAT[cat].tint,
+          transition:'width .6s'
+        }}/>
+      ))}
+      <div style={{ flex:1 }}/>
+    </div>
+  );
+}
+
+function WeekChart() {
+  const D = window.DATA;
+  const max = Math.max(...D.WEEK.map(d=>d.v));
+  return (
+    <div style={{ display:'flex', alignItems:'flex-end', gap:8, height:120, paddingTop:8 }}>
+      {D.WEEK.map((d,i) => {
+        const h = (d.v/max) * 100;
+        const isToday = i === D.WEEK.length - 1;
+        return (
+          <div key={d.d} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:6 }}>
+            <div style={{
+              fontSize:10, fontWeight:700,
+              color: isToday ? 'var(--saffron)' : 'var(--muted)',
+              fontFamily:"'Baloo 2', cursive"
+            }}>
+              {d.v >= 1000 ? (d.v/1000).toFixed(1)+'K' : d.v}
+            </div>
+            <div style={{
+              width:'100%', height: h + '%', minHeight: 4,
+              background: isToday ? 'var(--saffron)' : 'var(--chip)',
+              borderRadius: 6,
+              transition:'height .6s'
+            }}/>
+            <div style={{ fontSize:11, fontWeight:600, color: isToday ? 'var(--ink)' : 'var(--muted)' }}>
+              {d.d}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function TxnRow({ txn, divider, onClick }) {
+  const D = window.DATA;
+  return (
+    <div onClick={onClick} style={{
+      display:'flex', alignItems:'center', gap:12,
+      padding:'10px 0',
+      borderBottom: divider ? '1px solid var(--hair)' : 'none',
+      cursor: onClick ? 'pointer' : 'default'
+    }}>
+      <CatBadge cat={txn.cat} size={40}/>
+      <div style={{ flex:1, minWidth:0 }}>
+        <div style={{ fontSize:14, fontWeight:600, color:'var(--ink)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{txn.merchant}</div>
+        <div style={{ fontSize:12, color:'var(--muted)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+          {D.formatDate(txn.date)} · {txn.bank}
+        </div>
+      </div>
+      <div style={{ textAlign:'right' }}>
+        <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:15, fontWeight:700, color:'var(--ink)' }}>
+          −{D.inr(txn.amount)}
+        </div>
+        <div style={{ display:'inline-flex', alignItems:'center', gap:3, fontSize:10, color:'var(--muted)', fontWeight:600, marginTop:2 }}>
+          <window.I.GmailLogo size={10}/> Gmail
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// TRANSACTIONS
+// ─────────────────────────────────────────────
+function Transactions() {
+  const D = window.DATA, I = window.I;
+  const [filter, setFilter] = useS('all');
+  const [query, setQuery] = useS('');
+  const [detail, setDetail] = useS(null);
+
+  const filtered = useMemo(() => {
+    return D.TXNS.filter(t => {
+      if (filter !== 'all' && t.cat !== filter) return false;
+      if (query && !(t.merchant + ' ' + t.note).toLowerCase().includes(query.toLowerCase())) return false;
+      return true;
+    });
+  }, [filter, query]);
+
+  const grouped = D.groupByDate(filtered);
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
+      <div style={{ padding:'12px 16px 0' }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 0 14px' }}>
+          <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:22, fontWeight:800, color:'var(--ink)' }}>Transactions</div>
+          <div style={{ fontSize:12, color:'var(--muted)', fontWeight:600 }}>{D.TXNS.length} total</div>
+        </div>
+
+        {/* Search */}
+        <div style={{
+          display:'flex', alignItems:'center', gap:10,
+          background:'var(--surface)', borderRadius:14, padding:'10px 14px',
+          border:'1px solid var(--hair)', marginBottom:12
+        }}>
+          <I.Search size={16} stroke="var(--muted)"/>
+          <input
+            value={query} onChange={e=>setQuery(e.target.value)}
+            placeholder="Search merchant or note…"
+            style={{ flex:1, border:'none', outline:'none', background:'transparent', fontSize:14, color:'var(--ink)', fontFamily:'inherit' }}
+          />
+        </div>
+
+        {/* Category chips */}
+        <div className="scroll" style={{ display:'flex', gap:6, overflowX:'auto', paddingBottom:12, marginLeft:-16, marginRight:-16, paddingLeft:16, paddingRight:16 }}>
+          <Chip active={filter==='all'} onClick={() => setFilter('all')}>All</Chip>
+          {D.CATEGORIES.map(c => (
+            <Chip key={c.key} active={filter===c.key} onClick={() => setFilter(c.key)} tint={c.tint}>
+              {c.key}
+            </Chip>
+          ))}
+        </div>
+      </div>
+
+      <div className="scroll" style={{ flex:1, overflowY:'auto', padding:'0 16px 24px' }}>
+        {filtered.length === 0 && (
+          <div style={{ textAlign:'center', color:'var(--muted)', padding:'40px 20px', fontSize:14 }}>
+            No transactions match.
+          </div>
+        )}
+        {grouped.map(([date, list]) => {
+          const daySum = list.reduce((s,t)=>s+t.amount,0);
+          return (
+            <div key={date} style={{ marginBottom:14 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'6px 2px', fontSize:11, fontWeight:700, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.6px' }}>
+                <span>{D.formatDate(date)}</span>
+                <span style={{ fontFamily:"'Baloo 2', cursive", fontSize:13 }}>{D.inr(daySum)}</span>
+              </div>
+              <div style={{ background:'var(--surface)', borderRadius:'var(--rs)', border:'1px solid var(--hair)', overflow:'hidden' }}>
+                {list.map((t,i) => (
+                  <div key={t.id} style={{ padding:'0 14px' }}>
+                    <TxnRow txn={t} divider={i < list.length - 1} onClick={() => setDetail(t)}/>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {detail && <TxnDetail txn={detail} onClose={() => setDetail(null)}/>}
+    </div>
+  );
+}
+
+function Chip({ active, onClick, children, tint }) {
+  return (
+    <button onClick={onClick} style={{
+      flexShrink:0, padding:'7px 14px', borderRadius:99,
+      border: '1px solid ' + (active ? 'var(--ink)' : 'var(--hair)'),
+      background: active ? 'var(--ink)' : 'var(--surface)',
+      color: active ? '#fff' : 'var(--ink-2)',
+      fontSize: 13, fontWeight: 600, fontFamily:'inherit',
+      cursor:'pointer', whiteSpace:'nowrap'
+    }}>
+      {children}
+    </button>
+  );
+}
+
+function TxnDetail({ txn, onClose }) {
+  const D = window.DATA, I = window.I;
+  return (
+    <div onClick={onClose} style={{
+      position:'absolute', inset:0, background:'rgba(15,18,38,.55)',
+      backdropFilter:'blur(4px)',
+      display:'flex', alignItems:'flex-end', zIndex:50,
+      animation:'fadeIn .2s ease'
+    }}>
+      <div onClick={e=>e.stopPropagation()} style={{
+        background:'var(--surface)', width:'100%',
+        borderRadius:'24px 24px 0 0', padding:'18px 20px 24px',
+        maxHeight:'85%', overflowY:'auto',
+        animation:'slideUp .3s ease'
+      }}>
+        <div style={{ width:40, height:4, background:'var(--hair)', borderRadius:99, margin:'0 auto 18px' }}/>
+        <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:18 }}>
+          <CatBadge cat={txn.cat} size={52}/>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:16, fontWeight:700, color:'var(--ink)' }}>{txn.merchant}</div>
+            <div style={{ fontSize:13, color:'var(--muted)' }}>{txn.note}</div>
+          </div>
+        </div>
+        <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:40, fontWeight:800, color:'var(--ink)', letterSpacing:'-0.5px', marginBottom:4 }}>
+          −{D.inr(txn.amount)}
+        </div>
+        <div style={{ fontSize:13, color:'var(--muted)', marginBottom:18 }}>
+          {D.formatDate(txn.date)} · {new Date(txn.date).toLocaleDateString('en-IN', { weekday:'long' })}
+        </div>
+
+        <Row label="Category" value={txn.cat}/>
+        <Row label="Bank" value={txn.bank}/>
+        <Row label="Reference" value={txn.ref} mono/>
+        <Row label="Source" value={<span style={{ display:'inline-flex', alignItems:'center', gap:6 }}><I.GmailLogo size={14}/> Gmail · Auto-parsed</span>}/>
+
+        <div style={{
+          marginTop:18, background:'var(--chip)', borderRadius:14, padding:14,
+          fontSize:12, color:'var(--muted)', lineHeight:1.55
+        }}>
+          <div style={{ fontSize:11, fontWeight:700, color:'var(--ink)', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:6, display:'flex', alignItems:'center', gap:6 }}>
+            <I.Mail size={12}/> Source email
+          </div>
+          <div style={{ fontFamily:'ui-monospace, monospace', fontSize:11, lineHeight:1.6 }}>
+            <b>From:</b> alerts@{txn.bank.toLowerCase()}bank.com<br/>
+            <b>Subject:</b> Transaction alert · A/c **1234<br/>
+            <br/>
+            Dear Customer, INR {txn.amount.toFixed(2)} has been debited from your account via UPI to {txn.merchant} on {new Date(txn.date).toLocaleDateString('en-IN')}. Ref: {txn.ref}.
+          </div>
+        </div>
+
+        <div style={{ display:'flex', gap:10, marginTop:18 }}>
+          <button style={{ ...secondaryBtn, flex:1 }}><I.Edit size={14}/> Edit category</button>
+          <button style={{ ...secondaryBtn, flex:1 }}><I.Trash size={14}/> Delete</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Row({ label, value, mono }) {
+  return (
+    <div style={{ display:'flex', justifyContent:'space-between', padding:'10px 0', borderBottom:'1px solid var(--hair)' }}>
+      <span style={{ fontSize:13, color:'var(--muted)' }}>{label}</span>
+      <span style={{ fontSize:13, fontWeight:600, color:'var(--ink)', fontFamily: mono ? 'ui-monospace, monospace' : 'inherit' }}>{value}</span>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// BUDGET
+// ─────────────────────────────────────────────
+function Budget() {
+  const D = window.DATA;
+  const byCat = D.byCategory(D.TXNS);
+  const [editing, setEditing] = useS(null);
+  const [budgets, setBudgets] = useS({ ...D.BUDGETS });
+  const total = Object.values(budgets).reduce((a,b)=>a+b,0);
+  const spent = Object.values(byCat).reduce((a,b)=>a+b,0);
+
+  return (
+    <div className="scroll" style={{ flex:1, overflowY:'auto', padding:'12px 16px 24px' }}>
+      <div style={{ padding:'8px 4px 18px' }}>
+        <div style={{ fontSize:13, color:'var(--muted)', fontWeight:500 }}>April 2026</div>
+        <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:22, fontWeight:800, color:'var(--ink)', letterSpacing:'-0.3px' }}>Budgets</div>
+      </div>
+
+      {/* Summary card */}
+      <div style={{
+        background:'var(--surface)', borderRadius:'var(--r)', padding:'18px',
+        marginBottom:14, border:'1px solid var(--hair)', boxShadow:'var(--shadow-1)',
+        display:'flex', gap:20
+      }}>
+        <RingChart value={spent} total={total}/>
+        <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'center' }}>
+          <div style={{ fontSize:11, fontWeight:700, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.6px' }}>Total budget</div>
+          <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:26, fontWeight:800, color:'var(--ink)' }}>{D.inr(total)}</div>
+          <div style={{ fontSize:13, color:'var(--muted)', marginTop:6 }}>
+            <span style={{ color:'var(--saffron)', fontWeight:700 }}>{D.inr(spent)}</span> spent · {D.inr(total-spent)} left
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+        {D.CATEGORIES.map(c => {
+          const sp = byCat[c.key] || 0;
+          const bd = budgets[c.key];
+          const p = Math.min(100, (sp/bd)*100);
+          const over = sp > bd;
+          const isEditing = editing === c.key;
+          return (
+            <div key={c.key} style={{
+              background:'var(--surface)', borderRadius:'var(--rs)', padding:'14px',
+              border:'1px solid var(--hair)', boxShadow:'var(--shadow-1)'
+            }}>
+              <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:10 }}>
+                <CatBadge cat={c.key} size={38}/>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:14, fontWeight:700, color:'var(--ink)' }}>{c.key}</div>
+                  <div style={{ fontSize:12, color: over ? 'var(--red)' : 'var(--muted)', fontWeight:600 }}>
+                    {over ? '⚠ Over by ' + D.inr(sp-bd) : D.inr(bd-sp) + ' left'}
+                  </div>
+                </div>
+                {isEditing ? (
+                  <input
+                    type="number" autoFocus
+                    defaultValue={bd}
+                    onBlur={e => { setBudgets({ ...budgets, [c.key]: Number(e.target.value) || bd }); setEditing(null); }}
+                    onKeyDown={e => e.key === 'Enter' && e.target.blur()}
+                    style={{
+                      width:90, padding:'6px 10px', fontSize:14, fontWeight:700,
+                      border:'1.5px solid var(--saffron)', borderRadius:8,
+                      outline:'none', textAlign:'right', fontFamily:"'Baloo 2', cursive", color:'var(--ink)',
+                      background: 'var(--surface)'
+                    }}
+                  />
+                ) : (
+                  <div onClick={() => setEditing(c.key)} style={{ textAlign:'right', cursor:'pointer' }}>
+                    <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:16, fontWeight:700, color:'var(--ink)' }}>{D.inr(sp)}</div>
+                    <div style={{ fontSize:11, color:'var(--muted)' }}>of {D.inr(bd)} ✎</div>
+                  </div>
+                )}
+              </div>
+              <div style={{ height:6, background:'var(--chip)', borderRadius:99, overflow:'hidden' }}>
+                <div style={{
+                  width: p + '%', height:'100%',
+                  background: over ? 'var(--red)' : (p > 80 ? 'var(--amber)' : c.tint),
+                  borderRadius:99, transition:'width .6s'
+                }}/>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function RingChart({ value, total }) {
+  const pct = Math.min(1, value/total);
+  const R = 34, C = 2 * Math.PI * R;
+  return (
+    <div style={{ position:'relative', width:90, height:90 }}>
+      <svg width={90} height={90} viewBox="0 0 90 90" style={{ transform:'rotate(-90deg)' }}>
+        <circle cx="45" cy="45" r={R} fill="none" stroke="var(--chip)" strokeWidth="8"/>
+        <circle cx="45" cy="45" r={R} fill="none" stroke="var(--saffron)" strokeWidth="8"
+          strokeDasharray={C} strokeDashoffset={C * (1 - pct)} strokeLinecap="round"
+          style={{ transition:'stroke-dashoffset .8s' }}/>
+      </svg>
+      <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column' }}>
+        <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:20, fontWeight:800, color:'var(--ink)', lineHeight:1 }}>{Math.round(pct*100)}%</div>
+        <div style={{ fontSize:10, color:'var(--muted)', fontWeight:600, marginTop:2 }}>used</div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// INSIGHTS (charts)
+// ─────────────────────────────────────────────
+function Insights() {
+  const D = window.DATA;
+  const byCat = D.byCategory(D.TXNS);
+  const total = Object.values(byCat).reduce((a,b)=>a+b,0);
+  const entries = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+
+  return (
+    <div className="scroll" style={{ flex:1, overflowY:'auto', padding:'12px 16px 24px' }}>
+      <div style={{ padding:'8px 4px 18px' }}>
+        <div style={{ fontSize:13, color:'var(--muted)', fontWeight:500 }}>April 2026</div>
+        <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:22, fontWeight:800, color:'var(--ink)', letterSpacing:'-0.3px' }}>Insights</div>
+      </div>
+
+      {/* Donut */}
+      <Card title="Spending mix">
+        <div style={{ display:'flex', gap:18, alignItems:'center' }}>
+          <DonutChart entries={entries} total={total}/>
+          <div style={{ flex:1, display:'flex', flexDirection:'column', gap:7 }}>
+            {entries.map(([cat, v]) => (
+              <div key={cat} style={{ display:'flex', alignItems:'center', gap:8, fontSize:12 }}>
+                <div style={{ width:10, height:10, borderRadius:3, background: D.CAT[cat].tint }}/>
+                <span style={{ flex:1, color:'var(--ink-2)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{cat}</span>
+                <span style={{ fontFamily:"'Baloo 2', cursive", fontWeight:700, color:'var(--ink)' }}>{Math.round(v/total*100)}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      <Card title="Daily spend — last 7 days">
+        <WeekChart/>
+      </Card>
+
+      <Card title="Top merchants">
+        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+          {topMerchants(D.TXNS).slice(0,5).map((m,i) => (
+            <div key={m.name} style={{ display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ width:24, height:24, borderRadius:'50%', background:'var(--chip)', color:'var(--muted)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:800 }}>
+                {i+1}
+              </div>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontSize:14, fontWeight:600, color:'var(--ink)' }}>{m.name}</div>
+                <div style={{ fontSize:11, color:'var(--muted)' }}>{m.count} transactions</div>
+              </div>
+              <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:15, fontWeight:700, color:'var(--ink)' }}>{D.inr(m.total)}</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card title="💡 Smart tips" style={{ background:'var(--ink)', color:'#fff', border:'none' }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+          {[
+            'Food spending is <b>18% higher</b> than last month. Zomato alone accounts for ₹1,395.',
+            'You\'re on track to hit your <b>Rent</b> budget (100%) — no surprises.',
+            'You have <b>3 recurring subscriptions</b>: Netflix, Spotify, Cult.fit. Total ₹2,267/mo.',
+          ].map((t,i) => (
+            <div key={i} style={{
+              background:'rgba(255,255,255,.06)', borderLeft:'3px solid var(--saffron)',
+              padding:'10px 12px', borderRadius:8, fontSize:13, lineHeight:1.55,
+              color:'rgba(255,255,255,.88)'
+            }} dangerouslySetInnerHTML={{__html: t}}/>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function topMerchants(txns) {
+  const m = {};
+  txns.forEach(t => {
+    if (!m[t.merchant]) m[t.merchant] = { name: t.merchant, total: 0, count: 0 };
+    m[t.merchant].total += t.amount;
+    m[t.merchant].count++;
+  });
+  return Object.values(m).sort((a,b) => b.total - a.total);
+}
+
+function DonutChart({ entries, total }) {
+  const D = window.DATA;
+  const R = 42, CX = 55, CY = 55;
+  let angle = -Math.PI/2;
+  const paths = entries.map(([cat, v]) => {
+    const frac = v / total;
+    const a2 = angle + frac * 2 * Math.PI;
+    const large = frac > 0.5 ? 1 : 0;
+    const x1 = CX + R * Math.cos(angle), y1 = CY + R * Math.sin(angle);
+    const x2 = CX + R * Math.cos(a2), y2 = CY + R * Math.sin(a2);
+    const d = `M ${CX} ${CY} L ${x1} ${y1} A ${R} ${R} 0 ${large} 1 ${x2} ${y2} Z`;
+    angle = a2;
+    return <path key={cat} d={d} fill={D.CAT[cat].tint}/>;
+  });
+  return (
+    <div style={{ position:'relative', width:110, height:110, flexShrink:0 }}>
+      <svg width="110" height="110" viewBox="0 0 110 110">
+        {paths}
+        <circle cx={CX} cy={CY} r="22" fill="var(--surface)"/>
+      </svg>
+      <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column' }}>
+        <div style={{ fontSize:10, color:'var(--muted)', fontWeight:700, textTransform:'uppercase', letterSpacing:'.5px' }}>Total</div>
+        <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:15, fontWeight:800, color:'var(--ink)' }}>{D.inr(total)}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// SETTINGS
+// ─────────────────────────────────────────────
+function Settings({ onReset }) {
+  const I = window.I;
+  return (
+    <div className="scroll" style={{ flex:1, overflowY:'auto', padding:'12px 16px 24px' }}>
+      <div style={{ padding:'8px 4px 18px' }}>
+        <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:22, fontWeight:800, color:'var(--ink)', letterSpacing:'-0.3px' }}>Settings</div>
+      </div>
+
+      {/* Profile */}
+      <div style={{
+        background:'var(--surface)', borderRadius:'var(--r)', padding:'18px',
+        marginBottom:14, border:'1px solid var(--hair)', display:'flex', alignItems:'center', gap:14
+      }}>
+        <div style={{ width:52, height:52, borderRadius:'50%', background:'linear-gradient(135deg, var(--saffron), var(--saffron-ink))', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Baloo 2', cursive", fontSize:22, fontWeight:800 }}>A</div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:15, fontWeight:700, color:'var(--ink)' }}>Arjun Sharma</div>
+          <div style={{ fontSize:12, color:'var(--muted)' }}>arjun@gmail.com</div>
+        </div>
+        <I.ChevronRight size={18} stroke="var(--muted)"/>
+      </div>
+
+      <SettingsGroup title="Connected">
+        <SettingRow icon="GmailLogo" label="Gmail" value="arjun@gmail.com · synced 2m ago" chev/>
+        <SettingRow icon="Key" label="AI assistant" value="Connected · Claude" chev/>
+      </SettingsGroup>
+
+      <SettingsGroup title="Preferences">
+        <SettingRow icon="Bell" label="Notifications" value="Daily summary · 8pm" chev/>
+        <SettingRow icon="Wallet" label="Currency" value="₹ Indian Rupee" chev/>
+        <SettingRow icon="Shield" label="Privacy" chev/>
+      </SettingsGroup>
+
+      <SettingsGroup title="Data">
+        <SettingRow icon="Download" label="Export as CSV" chev/>
+        <SettingRow icon="Refresh" label="Re-sync Gmail" chev/>
+        <SettingRow icon="Trash" label="Reset onboarding" onClick={onReset} danger/>
+      </SettingsGroup>
+
+      <div style={{ textAlign:'center', fontSize:12, color:'var(--muted)', marginTop:20 }}>
+        Paisa · v1.0 · Made with 🧡 in Bengaluru
+      </div>
+    </div>
+  );
+}
+
+function SettingsGroup({ title, children }) {
+  return (
+    <div style={{ marginBottom:16 }}>
+      <div style={{ fontSize:11, fontWeight:700, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.6px', padding:'0 4px 8px' }}>{title}</div>
+      <div style={{ background:'var(--surface)', borderRadius:'var(--rs)', border:'1px solid var(--hair)', overflow:'hidden' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function SettingRow({ icon, label, value, chev, danger, onClick }) {
+  const I = window.I;
+  const Ico = I[icon] || I.Info;
+  return (
+    <div onClick={onClick} style={{
+      display:'flex', alignItems:'center', gap:12, padding:'13px 14px',
+      borderBottom:'1px solid var(--hair)', cursor: onClick ? 'pointer' : 'default'
+    }}>
+      <div style={{ width:34, height:34, borderRadius:10, background:'var(--chip)', color: danger ? 'var(--red)' : 'var(--ink-2)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <Ico size={16}/>
+      </div>
+      <div style={{ flex:1, minWidth:0 }}>
+        <div style={{ fontSize:14, fontWeight:600, color: danger ? 'var(--red)' : 'var(--ink)' }}>{label}</div>
+        {value && <div style={{ fontSize:12, color:'var(--muted)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{value}</div>}
+      </div>
+      {chev && <I.ChevronRight size={16} stroke="var(--muted)"/>}
+    </div>
+  );
+}
+
+const linkBtn = {
+  background:'transparent', border:'none', color:'var(--saffron)',
+  fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit',
+  display:'inline-flex', alignItems:'center', gap:2
+};
+const circleBtn = {
+  width:40, height:40, borderRadius:'50%',
+  background:'var(--surface)', border:'1px solid var(--hair)',
+  color:'var(--ink)', cursor:'pointer',
+  display:'flex', alignItems:'center', justifyContent:'center',
+  padding:0
+};
+const secondaryBtn = {
+  padding:'12px', border:'1px solid var(--hair)', background:'var(--surface)',
+  color:'var(--ink)', borderRadius:12, fontSize:13, fontWeight:600,
+  cursor:'pointer', fontFamily:'inherit',
+  display:'flex', alignItems:'center', justifyContent:'center', gap:6
+};
+
+Object.assign(window, { AppScreens });
+
+</script>
+
+<!-- assistant.jsx -->
+<script type="text/babel" data-presets="react">
+// Floating AI assistant with real Claude integration + streaming-ish typing
+const { useState: useSt, useRef: useR, useEffect: useEf } = React;
+
+const SUGGESTED = [
+  'How can I save more?',
+  'How can I improve my credit score?',
+  'How can I invest more?',
+  'Where am I overspending?',
+];
+
+function buildContext() {
+  const D = window.DATA;
+  const byCat = D.byCategory(D.TXNS);
+  const total = D.monthSpend(D.TXNS);
+  const totalBudget = Object.values(D.BUDGETS).reduce((a,b)=>a+b,0);
+  return `You are Paisa, a friendly personal-finance assistant for an Indian user. Respond in 2-4 short sentences. Use ₹ for amounts. Be specific, reference the user's actual spending below. Never invent numbers.
+
+USER'S APRIL 2026 SPENDING:
+- Total spent: ₹${total.toLocaleString('en-IN')} of ₹${totalBudget.toLocaleString('en-IN')} budget
+- Days covered: 1–17 April (${Math.round((total/17)).toLocaleString('en-IN')}/day avg)
+- By category: ${Object.entries(byCat).map(([k,v]) => `${k} ₹${v.toLocaleString('en-IN')} (budget ₹${D.BUDGETS[k].toLocaleString('en-IN')})`).join(', ')}
+- Recurring subscriptions: Netflix ₹649, Spotify ₹119, Cult.fit ₹1499 = ₹2,267/mo
+- Top merchants: Landlord ₹22000, Amazon ₹3789, Zomato ₹1395, Swiggy Instamart ₹742
+
+Respond conversationally. If asked unrelated things, politely steer back to money.`;
+}
+
+function FloatingAssistant({ open, onClose }) {
+  const I = window.I, D = window.DATA;
+  const [msgs, setMsgs] = useSt([
+    { role: 'assistant', text: "Hi Arjun 👋 I can see you've spent ₹" + D.monthSpend(D.TXNS).toLocaleString('en-IN') + " this month. What would you like to know?" }
+  ]);
+  const [input, setInput] = useSt('');
+  const [loading, setLoading] = useSt(false);
+  const scrollRef = useR(null);
+  const typingRef = useR(null);
+
+  useEf(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [msgs, loading]);
+
+  const send = async (text) => {
+    const q = (text || input).trim();
+    if (!q || loading) return;
+    setInput('');
+    const history = [...msgs, { role: 'user', text: q }];
+    setMsgs(history);
+    setLoading(true);
+
+    try {
+      const apiMessages = history.map(m => ({
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.text
+      }));
+      apiMessages.unshift({ role: 'user', content: buildContext() });
+      apiMessages.splice(1, 0, { role: 'assistant', content: 'Understood. I\'ll help with your money questions using your real data.' });
+
+      const r = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: apiMessages })
+      });
+      const { reply } = await r.json();
+      // Typewriter reveal
+      setMsgs(m => [...m, { role: 'assistant', text: '' }]);
+      setLoading(false);
+      let i = 0;
+      clearInterval(typingRef.current);
+      typingRef.current = setInterval(() => {
+        i += 2;
+        setMsgs(m => {
+          const nm = [...m];
+          nm[nm.length - 1] = { role: 'assistant', text: reply.slice(0, i) };
+          return nm;
+        });
+        if (i >= reply.length) clearInterval(typingRef.current);
+      }, 14);
+    } catch (e) {
+      setLoading(false);
+      setMsgs(m => [...m, { role: 'assistant', text: "Hmm, I couldn't reach the AI just now. Try again in a moment." }]);
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <div style={{
+      position:'absolute', inset:0, zIndex: 40,
+      display:'flex', flexDirection:'column',
+      background: 'rgba(15,18,38,.45)',
+      backdropFilter: 'blur(4px)',
+      animation:'fadeIn .2s ease'
+    }} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{
+        marginTop:'auto',
+        background:'var(--surface)',
+        borderRadius:'24px 24px 0 0',
+        height:'82%',
+        display:'flex', flexDirection:'column',
+        animation:'slideUp .3s ease',
+        overflow:'hidden',
+      }}>
+        {/* Handle + header */}
+        <div style={{ padding:'14px 18px 6px', flexShrink:0 }}>
+          <div style={{ width:40, height:4, background:'var(--hair)', borderRadius:99, margin:'0 auto 14px' }}/>
+          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+            <div style={{
+              width:40, height:40, borderRadius:12,
+              background:'linear-gradient(135deg, var(--saffron), var(--saffron-ink))',
+              color:'#fff', display:'flex', alignItems:'center', justifyContent:'center',
+              boxShadow:'0 6px 18px -6px var(--saffron)'
+            }}>
+              <I.Sparkles size={20}/>
+            </div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:15, fontWeight:700, color:'var(--ink)' }}>Ask Paisa</div>
+              <div style={{ fontSize:12, color:'var(--muted)', display:'flex', alignItems:'center', gap:6 }}>
+                <div style={{ width:6, height:6, borderRadius:'50%', background:'var(--green)' }}/>
+                AI · reads your spending
+              </div>
+            </div>
+            <button onClick={onClose} style={{
+              width:34, height:34, borderRadius:'50%',
+              background:'var(--chip)', border:'none', color:'var(--ink)',
+              cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center'
+            }}>
+              <I.X size={16}/>
+            </button>
+          </div>
+        </div>
+
+        {/* Messages */}
+        <div ref={scrollRef} className="scroll" style={{
+          flex:1, overflowY:'auto', padding:'16px 18px 10px',
+          display:'flex', flexDirection:'column', gap:12
+        }}>
+          {msgs.map((m, i) => <Bubble key={i} role={m.role} text={m.text}/>)}
+          {loading && <Bubble role="assistant" text="" typing/>}
+        </div>
+
+        {/* Suggested */}
+        {msgs.length <= 2 && (
+          <div className="scroll" style={{
+            display:'flex', gap:6, padding:'4px 18px 10px',
+            overflowX:'auto', flexShrink:0
+          }}>
+            {SUGGESTED.map(s => (
+              <button key={s} onClick={() => send(s)} style={{
+                flexShrink:0, padding:'8px 12px', borderRadius:99,
+                background:'var(--chip)', border:'1px solid var(--hair)',
+                color:'var(--ink-2)', fontSize:12, fontWeight:600,
+                cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap'
+              }}>{s}</button>
+            ))}
+          </div>
+        )}
+
+        {/* Input */}
+        <div style={{ padding:'10px 14px 16px', flexShrink:0, borderTop:'1px solid var(--hair)', background:'var(--surface)' }}>
+          <div style={{
+            display:'flex', alignItems:'center', gap:8,
+            background:'var(--chip)', borderRadius:16, padding:'8px 8px 8px 16px',
+          }}>
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && send()}
+              placeholder="Ask about your spending…"
+              style={{
+                flex:1, border:'none', outline:'none', background:'transparent',
+                color:'var(--ink)', fontSize:14, fontFamily:'inherit', padding:'6px 0'
+              }}
+            />
+            <button onClick={() => send()} disabled={!input.trim() || loading} style={{
+              width:36, height:36, borderRadius:'50%',
+              background: input.trim() ? 'var(--saffron)' : 'var(--hair)',
+              color:'#fff', border:'none', cursor: input.trim() ? 'pointer' : 'default',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              transition:'background .15s'
+            }}>
+              <I.Send size={15}/>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Bubble({ role, text, typing }) {
+  const isUser = role === 'user';
+  return (
+    <div style={{ display:'flex', justifyContent: isUser ? 'flex-end' : 'flex-start' }}>
+      <div style={{
+        maxWidth:'82%',
+        padding:'10px 14px',
+        borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+        background: isUser ? 'var(--saffron)' : 'var(--chip)',
+        color: isUser ? '#fff' : 'var(--ink)',
+        fontSize:14, lineHeight:1.55, whiteSpace:'pre-wrap',
+        wordBreak:'break-word'
+      }}>
+        {typing ? <TypingDots/> : text}
+      </div>
+    </div>
+  );
+}
+
+function TypingDots() {
+  return (
+    <div style={{ display:'flex', gap:4, padding:'2px 0' }}>
+      {[0,1,2].map(i => (
+        <div key={i} style={{
+          width:6, height:6, borderRadius:'50%', background:'var(--muted)',
+          animation:`bounce 1.2s ${i*0.15}s infinite`
+        }}/>
+      ))}
+    </div>
+  );
+}
+
+if (!document.getElementById('assist-kf')) {
+  const s = document.createElement('style');
+  s.id = 'assist-kf';
+  s.textContent = `@keyframes bounce { 0%,60%,100% { opacity:.3; transform:translateY(0); } 30% { opacity:1; transform:translateY(-4px); } }`;
+  document.head.appendChild(s);
+}
+
+// Floating action button
+function AssistantFAB({ onClick }) {
+  const I = window.I;
+  return (
+    <button onClick={onClick} style={{
+      position:'absolute', right:18, bottom:78,
+      width:58, height:58, borderRadius:'50%',
+      background:'linear-gradient(135deg, var(--saffron), var(--saffron-ink))',
+      color:'#fff', border:'none', cursor:'pointer',
+      display:'flex', alignItems:'center', justifyContent:'center',
+      boxShadow:'0 12px 28px -8px var(--saffron), 0 4px 10px rgba(0,0,0,.2)',
+      zIndex: 20,
+      animation: 'pulseFab 3s ease-in-out infinite'
+    }}>
+      <I.Sparkles size={24} stroke="#fff" strokeWidth={2}/>
+      <span style={{
+        position:'absolute', top:-2, right:-2,
+        width:14, height:14, borderRadius:'50%',
+        background:'var(--green)', border:'2px solid var(--bg)'
+      }}/>
+    </button>
+  );
+}
+
+if (!document.getElementById('fab-kf')) {
+  const s = document.createElement('style');
+  s.id = 'fab-kf';
+  s.textContent = `@keyframes pulseFab { 0%,100% { transform:scale(1); } 50% { transform:scale(1.04); } }`;
+  document.head.appendChild(s);
+}
+
+Object.assign(window, { FloatingAssistant, AssistantFAB });
+
+</script>
+
+<!-- onboarding.jsx -->
+<script type="text/babel" data-presets="react">
+// Onboarding flow — 4 steps: welcome, Gmail connect, API key, done
+const { useState } = React;
+
+function Onboarding({ onComplete }) {
+  const [step, setStep] = useState(0);
+  const [email, setEmail] = useState('');
+  const [scriptUrl, setScriptUrl] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [connecting, setConnecting] = useState(false);
+  const [connected, setConnected] = useState(false);
+
+  const doConnect = () => {
+    if (!scriptUrl.startsWith('https://script.google.com')) return;
+    setConnecting(true);
+    fetch(scriptUrl + '?days=1')
+      .then(() => {
+        setConnecting(false);
+        setConnected(true);
+        setTimeout(() => setStep(2), 800);
+      })
+      .catch(() => {
+        setConnecting(false);
+        setConnected(true);
+        setTimeout(() => setStep(2), 800);
+      });
+  };
+
+  const done = () => {
+    localStorage.setItem('paisa_email', email || 'you@gmail.com');
+    localStorage.setItem('paisa_script_url', scriptUrl);
+    onComplete({ email: email || 'you@gmail.com', scriptUrl, apiKey });
+  };
+
+  return (
+    <div style={{
+      position:'absolute', inset:0, background:'var(--bg)',
+      display:'flex', flexDirection:'column',
+      padding:'24px 24px 28px',
+      animation:'fadeIn .3s ease'
+    }}>
+      {/* Progress dots */}
+      <div style={{ display:'flex', gap:6, marginBottom:32 }}>
+        {[0,1,2,3].map(i => (
+          <div key={i} style={{
+            flex: i <= step ? 2 : 1,
+            height: 4,
+            borderRadius: 99,
+            background: i <= step ? 'var(--saffron)' : 'var(--hair)',
+            transition: 'all .3s'
+          }}/>
+        ))}
+      </div>
+
+      {step === 0 && <StepWelcome onNext={() => setStep(1)} />}
+      {step === 1 && <StepGmail
+        email={email} setEmail={setEmail}
+        scriptUrl={scriptUrl} setScriptUrl={setScriptUrl}
+        connecting={connecting} connected={connected}
+        doConnect={doConnect}
+        onBack={() => setStep(0)}
+      />}
+      {step === 2 && <StepApiKey
+        apiKey={apiKey} setApiKey={setApiKey}
+        onNext={() => setStep(3)}
+        onBack={() => setStep(1)}
+      />}
+      {step === 3 && <StepReady onDone={done} email={email || 'you@gmail.com'} />}
+    </div>
+  );
+}
+
+function StepWelcome({ onNext }) {
+  return (
+    <div style={{ flex:1, display:'flex', flexDirection:'column' }}>
+      <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center', textAlign:'center' }}>
+        <div style={{
+          width: 96, height: 96, borderRadius: 28,
+          background: 'linear-gradient(135deg, var(--saffron), var(--saffron-ink))',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          marginBottom: 24,
+          boxShadow: '0 20px 40px -10px var(--saffron)',
+          color: '#fff',
+          fontFamily: "'Baloo 2', cursive", fontSize: 52, fontWeight: 800,
+          lineHeight: 1,
+        }}>₹</div>
+        <div style={{
+          fontFamily: "'Baloo 2', cursive", fontSize: 36, fontWeight: 800,
+          color: 'var(--ink)', letterSpacing: '-0.5px', marginBottom: 6
+        }}>Paisa</div>
+        <div style={{ fontSize: 15, color: 'var(--muted)', marginBottom: 32, letterSpacing: '.2px' }}>
+          आपका पैसा, साफ़ दिखे
+        </div>
+        <div style={{
+          fontSize: 22, fontWeight: 700, color:'var(--ink)',
+          lineHeight: 1.3, maxWidth: 300, marginBottom: 14,
+          textWrap: 'balance'
+        }}>
+          Track every rupee, automatically.
+        </div>
+        <div style={{ fontSize: 14, color:'var(--muted)', lineHeight: 1.55, maxWidth: 280 }}>
+          Paisa reads your transaction emails, buckets them by category, and shows you exactly where your money goes.
+        </div>
+      </div>
+
+      <button onClick={onNext} style={primaryBtn}>Get started</button>
+      <div style={{ textAlign:'center', fontSize:12, color:'var(--muted)', marginTop:12 }}>
+        🔒 Your data stays on this device
+      </div>
+    </div>
+  );
+}
+
+function StepGmail({ email, setEmail, scriptUrl, setScriptUrl, connecting, connected, doConnect, onBack }) {
+  const I = window.I;
+  return (
+    <div style={{ flex:1, display:'flex', flexDirection:'column' }}>
+      <button onClick={onBack} style={backBtn}><I.ChevronLeft size={18}/></button>
+      <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:26, fontWeight:800, color:'var(--ink)', marginTop: 20, marginBottom: 6, letterSpacing:'-0.3px' }}>
+        Connect your Gmail
+      </div>
+      <div style={{ fontSize: 14, color:'var(--muted)', lineHeight:1.5, marginBottom: 24 }}>
+        We'll scan transaction emails from banks, UPI apps, and merchants. We never read personal mail.
+      </div>
+
+      <div style={{
+        background:'var(--surface)', borderRadius:'var(--r)', padding:'18px',
+        boxShadow:'var(--shadow-1)', marginBottom: 16,
+        border:'1px solid var(--hair)'
+      }}>
+        <div style={{ fontSize:12, fontWeight:700, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.6px', marginBottom:10 }}>
+          Gmail address
+        </div>
+        <div style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 0', borderBottom:'1.5px solid var(--hair)' }}>
+          <I.GmailLogo size={22}/>
+          <input
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="you@gmail.com"
+            style={{
+              flex:1, border:'none', outline:'none',
+              background:'transparent', color:'var(--ink)',
+              fontSize:15, fontWeight:500, fontFamily:'inherit'
+            }}
+          />
+        </div>
+        <div style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 0', borderBottom:'1.5px solid var(--hair)', marginTop:8 }}>
+          <I.Key size={20} stroke="var(--saffron)"/>
+          <input
+            type="url"
+            value={scriptUrl}
+            onChange={e => setScriptUrl(e.target.value)}
+            placeholder="https://script.google.com/macros/s/..."
+            style={{
+              flex:1, border:'none', outline:'none',
+              background:'transparent', color:'var(--ink)',
+              fontSize:13, fontWeight:500, fontFamily:'inherit'
+            }}
+          />
+        </div>
+        <div style={{ fontSize:12, color:'var(--muted)', marginTop:12, lineHeight:1.5, display:'flex', gap:8 }}>
+          <I.Shield size={14} stroke="var(--green)" strokeWidth={2}/>
+          <span>Paste your Google Apps Script URL above. Read-only access — revoke anytime.</span>
+        </div>
+      </div>
+
+      {/* What we scan */}
+      <div style={{ fontSize:12, fontWeight:700, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.6px', marginBottom:10 }}>
+        What we'll read
+      </div>
+      <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:24 }}>
+        {['Bank transaction alerts','UPI payment confirmations','Credit card statements','Merchant receipts'].map(s => (
+          <div key={s} style={{ display:'flex', alignItems:'center', gap:10, fontSize:14, color:'var(--ink-2)' }}>
+            <div style={{ width:18, height:18, borderRadius:'50%', background:'var(--green-pale)', color:'var(--green)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <I.Check size={12} strokeWidth={3}/>
+            </div>
+            {s}
+          </div>
+        ))}
+      </div>
+
+      <div style={{ flex:1 }}/>
+
+      <button
+        onClick={doConnect}
+        disabled={!email || !scriptUrl || connecting || connected}
+        style={{
+          ...primaryBtn,
+          opacity: (!email || connecting) ? 0.6 : 1,
+          background: connected ? 'var(--green)' : 'var(--saffron)'
+        }}
+      >
+        {connecting && <span className="inline-spinner" style={spinner}/>}
+        {connected ? <><I.Check size={18} strokeWidth={3}/> Connected</> : connecting ? 'Authorizing with Google…' : 'Connect Gmail'}
+      </button>
+    </div>
+  );
+}
+
+function StepApiKey({ apiKey, setApiKey, onNext, onBack }) {
+  const I = window.I;
+  return (
+    <div style={{ flex:1, display:'flex', flexDirection:'column' }}>
+      <button onClick={onBack} style={backBtn}><I.ChevronLeft size={18}/></button>
+      <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:26, fontWeight:800, color:'var(--ink)', marginTop: 20, marginBottom: 6, letterSpacing:'-0.3px' }}>
+        Add your AI key
+      </div>
+      <div style={{ fontSize: 14, color:'var(--muted)', lineHeight:1.5, marginBottom: 24 }}>
+        Paisa uses an AI assistant to answer questions about your spending. Paste your key or skip — you can add it later.
+      </div>
+
+      <div style={{
+        background:'var(--surface)', borderRadius:'var(--r)', padding:'18px',
+        boxShadow:'var(--shadow-1)', marginBottom: 14,
+        border:'1px solid var(--hair)'
+      }}>
+        <div style={{ fontSize:12, fontWeight:700, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.6px', marginBottom:10 }}>
+          API Key
+        </div>
+        <div style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 0', borderBottom:'1.5px solid var(--hair)' }}>
+          <I.Key size={20} stroke="var(--saffron)"/>
+          <input
+            type="password"
+            value={apiKey}
+            onChange={e => setApiKey(e.target.value)}
+            placeholder="sk-ant-…"
+            style={{
+              flex:1, border:'none', outline:'none',
+              background:'transparent', color:'var(--ink)',
+              fontSize:15, fontWeight:500, fontFamily:'ui-monospace, SFMono-Regular, Menlo, monospace'
+            }}
+          />
+        </div>
+        <div style={{ fontSize:12, color:'var(--muted)', marginTop:12, lineHeight:1.5, display:'flex', gap:8 }}>
+          <I.Lock size={14} stroke="var(--muted)" strokeWidth={2}/>
+          <span>Stored locally on device. Never sent to Paisa servers.</span>
+        </div>
+      </div>
+
+      <div style={{
+        background:'var(--saffron-pale)', color:'var(--saffron-ink)',
+        borderRadius:14, padding:'12px 14px', fontSize:12, lineHeight:1.55,
+        marginBottom: 14
+      }}>
+        <b>Tip:</b> In this demo the AI is wired up for you — just tap Continue.
+      </div>
+
+      <div style={{ flex:1 }}/>
+
+      <button onClick={onNext} style={primaryBtn}>
+        Continue <I.ChevronRight size={18} strokeWidth={2.5}/>
+      </button>
+      <button onClick={onNext} style={{...textBtn, marginTop:8}}>
+        Skip for now
+      </button>
+    </div>
+  );
+}
+
+function StepReady({ onDone, email }) {
+  const I = window.I;
+  return (
+    <div style={{ flex:1, display:'flex', flexDirection:'column' }}>
+      <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center', textAlign:'center' }}>
+        <div style={{
+          width:96, height:96, borderRadius:'50%',
+          background:'var(--green-pale)',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          marginBottom:24,
+          color:'var(--green)'
+        }}>
+          <I.Check size={48} strokeWidth={3}/>
+        </div>
+        <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:28, fontWeight:800, color:'var(--ink)', marginBottom:8 }}>
+          You're all set
+        </div>
+        <div style={{ fontSize:14, color:'var(--muted)', lineHeight:1.55, maxWidth:280, marginBottom:24 }}>
+          We scanned <b style={{color:'var(--ink)'}}>{email}</b> and found <b style={{color:'var(--ink)'}}>20 transactions</b> across the last 30 days.
+        </div>
+
+        <div style={{
+          display:'grid', gridTemplateColumns:'1fr 1fr', gap:10,
+          width:'100%', maxWidth:300
+        }}>
+          <Stat label="Total spent" value="₹37.4K" color="var(--ink)"/>
+          <Stat label="Categories" value="8" color="var(--ink)"/>
+          <Stat label="Banks detected" value="2" color="var(--ink)"/>
+          <Stat label="Days covered" value="30" color="var(--ink)"/>
+        </div>
+      </div>
+
+      <button onClick={onDone} style={primaryBtn}>Open Paisa</button>
+    </div>
+  );
+}
+
+function Stat({ label, value, color }) {
+  return (
+    <div style={{
+      background:'var(--surface)', borderRadius:14, padding:'12px',
+      border:'1px solid var(--hair)',
+      textAlign:'left'
+    }}>
+      <div style={{ fontSize:11, fontWeight:700, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:4 }}>{label}</div>
+      <div style={{ fontFamily:"'Baloo 2', cursive", fontSize:22, fontWeight:800, color }}>{value}</div>
+    </div>
+  );
+}
+
+const primaryBtn = {
+  width:'100%', padding:'15px', border:'none',
+  borderRadius:16, background:'var(--saffron)', color:'#fff',
+  fontSize:16, fontWeight:700, fontFamily:'inherit',
+  cursor:'pointer',
+  boxShadow:'0 8px 24px -8px var(--saffron)',
+  display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+};
+const textBtn = {
+  width:'100%', padding:'12px', border:'none', background:'transparent',
+  color:'var(--muted)', fontSize:14, fontWeight:600,
+  fontFamily:'inherit', cursor:'pointer'
+};
+const backBtn = {
+  width:40, height:40, borderRadius:'50%',
+  background:'var(--surface)', border:'1px solid var(--hair)',
+  color:'var(--ink)', cursor:'pointer',
+  display:'flex', alignItems:'center', justifyContent:'center',
+  padding:0
+};
+const spinner = {
+  display:'inline-block', width:14, height:14,
+  border:'2px solid rgba(255,255,255,.3)', borderTopColor:'#fff',
+  borderRadius:'50%', animation:'spin .7s linear infinite'
+};
+
+window.Onboarding = Onboarding;
+
+// Add keyframes once
+if (!document.getElementById('onb-kf')) {
+  const s = document.createElement('style');
+  s.id = 'onb-kf';
+  s.textContent = `
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform:none; } }
+    @keyframes slideUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform:none; } }
+  `;
+  document.head.appendChild(s);
+}
+
+</script>
+
+<!-- app.jsx -->
+<script type="text/babel" data-presets="react">
+// Main app shell — tabs, theme, onboarding gate, assistant mount
+const { useState: uS, useEffect: uE } = React;
+
+const TWEAKS = /*EDITMODE-BEGIN*/{
+  "theme": "light",
+  "accent": "saffron"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [active, setActive] = uS('home');
+  const [onboarded, setOnboarded] = uS(false);
+  const [assistantOpen, setAssistantOpen] = uS(false);
+  const [theme, setTheme] = uS(TWEAKS.theme);
+  const [accent, setAccent] = uS(TWEAKS.accent);
+  const [tweaksOpen, setTweaksOpen] = uS(false);
+
+  // Apply theme + accent to screen container
+  uE(() => {
+    const el = document.getElementById('paisa-screen');
+    if (el) {
+      el.setAttribute('data-theme', theme);
+      el.setAttribute('data-accent', accent);
+    }
+  }, [theme, accent]);
+
+  // Tweaks integration
+  uE(() => {
+    const listener = (e) => {
+      if (e.data?.type === '__activate_edit_mode') setTweaksOpen(true);
+      if (e.data?.type === '__deactivate_edit_mode') setTweaksOpen(false);
+    };
+    window.addEventListener('message', listener);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', listener);
+  }, []);
+
+  const persist = (patch) => {
+    const next = { theme, accent, ...patch };
+    if (patch.theme) setTheme(patch.theme);
+    if (patch.accent) setAccent(patch.accent);
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: patch }, '*');
+  };
+
+  return (
+    <div className="stage">
+      <div className="stage-left">
+        <div className="brand-mark">Paisa<span>.</span></div>
+        <div className="brand-tagline">आपका पैसा, साफ़ दिखे</div>
+        <div className="hint-card">
+          <b>Interactive prototype.</b> Tap the ✨ assistant bubble or any nav tab. Budget rows are editable.
+        </div>
+      </div>
+
+      <div className="phone-wrap">
+        <div className="phone">
+          <div className="screen" id="paisa-screen" data-theme={theme} data-accent={accent}>
+            <div className="cutout"/>
+            <div className="statusbar">
+              <span>9:41</span>
+              <div className="icons">
+                {/* Signal */}
+                <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx=".5"/><rect x="4" y="6" width="3" height="6" rx=".5"/><rect x="8" y="3" width="3" height="9" rx=".5"/><rect x="12" y="0" width="3" height="12" rx=".5"/></svg>
+                {/* Wifi */}
+                <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M1 4a10 10 0 0113 0"/><path d="M3.5 6.5a6 6 0 018 0"/><circle cx="7.5" cy="9" r="1" fill="currentColor"/></svg>
+                {/* Battery */}
+                <svg width="22" height="11" viewBox="0 0 22 11" fill="none"><rect x=".5" y=".5" width="18" height="10" rx="2.5" stroke="currentColor"/><rect x="2" y="2" width="14" height="7" rx="1" fill="currentColor"/><rect x="20" y="3.5" width="1.5" height="4" rx=".5" fill="currentColor"/></svg>
+              </div>
+            </div>
+
+            <div className="app-body">
+              {!onboarded ? (
+                <window.Onboarding onComplete={() => setOnboarded(true)}/>
+              ) : (
+                <>
+                  <window.AppScreens
+                    active={active}
+                    onNav={setActive}
+                    onOpenAssistant={() => setAssistantOpen(true)}
+                    onReset={() => setOnboarded(false)}
+                  />
+                  <BottomNav active={active} onChange={setActive}/>
+                  {!assistantOpen && <window.AssistantFAB onClick={() => setAssistantOpen(true)}/>}
+                  <window.FloatingAssistant open={assistantOpen} onClose={() => setAssistantOpen(false)}/>
+                </>
+              )}
+            </div>
+
+            <div className="nav-hint"/>
+          </div>
+        </div>
+      </div>
+
+      <div className="stage-right">
+        <div className="hint-card">
+          <b>✨ Ask Paisa</b> — the floating bubble is wired to real AI and knows your transactions. Try "Where am I overspending?"
+        </div>
+        <div className="hint-card">
+          <b>Tweaks:</b> toggle the <kbd>Tweaks</kbd> button in the toolbar to change theme & accent color.
+        </div>
+        <div className="hint-card" style={{ opacity:.75 }}>
+          All data is mock. No real Gmail or accounts are touched.
+        </div>
+      </div>
+
+      {/* Tweaks panel */}
+      <div className={'tweaks-panel' + (tweaksOpen ? ' open' : '')}>
+        <div className="tweaks-title">Theme</div>
+        <div className="tweaks-row">
+          {['light','dark'].map(t => (
+            <button key={t} className={'tweak-btn' + (theme===t ? ' active' : '')} onClick={() => persist({ theme: t })}>
+              {t === 'light' ? '☀ Light' : '☾ Dark'}
+            </button>
+          ))}
+        </div>
+        <div className="tweaks-title">Accent</div>
+        <div className="tweaks-row">
+          {[
+            { k:'saffron',  c:'#FF6B35' },
+            { k:'indigo',   c:'#5B6CFF' },
+            { k:'teal',     c:'#0EA5A3' },
+            { k:'magenta',  c:'#D93C7A' },
+          ].map(s => (
+            <div key={s.k}
+              className={'swatch' + (accent===s.k ? ' active' : '')}
+              style={{ background: s.c, flex:1 }}
+              onClick={() => persist({ accent: s.k })}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Bottom navigation
+function BottomNav({ active, onChange }) {
+  const I = window.I;
+  const items = [
+    { k:'home',     icon:'Home',     label:'Home' },
+    { k:'txns',     icon:'List',     label:'Activity' },
+    { k:'budget',   icon:'Target',   label:'Budget' },
+    { k:'insights', icon:'Chart',    label:'Insights' },
+    { k:'settings', icon:'Settings', label:'Settings' },
+  ];
+  return (
+    <div style={{
+      position:'absolute', bottom:0, left:0, right:0,
+      background:'var(--surface)', borderTop:'1px solid var(--hair)',
+      padding:'8px 8px 10px',
+      display:'flex', justifyContent:'space-around',
+      zIndex: 15
+    }}>
+      {items.map(it => {
+        const Ico = I[it.icon];
+        const isActive = active === it.k;
+        return (
+          <button key={it.k} onClick={() => onChange(it.k)} style={{
+            flex:1, background:'transparent', border:'none',
+            cursor:'pointer', padding:'6px 4px',
+            display:'flex', flexDirection:'column', alignItems:'center', gap:3,
+            fontFamily:'inherit'
+          }}>
+            <Ico size={22} stroke={isActive ? 'var(--saffron)' : 'var(--muted)'} strokeWidth={isActive ? 2.2 : 1.75}/>
+            <span style={{
+              fontSize:10, fontWeight: isActive ? 700 : 500,
+              color: isActive ? 'var(--saffron)' : 'var(--muted)',
+              letterSpacing:'.2px'
+            }}>{it.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+
+</script>
+
+
+</body>
+</html>
