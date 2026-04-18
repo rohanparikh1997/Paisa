@@ -2016,11 +2016,13 @@ async function bootstrap() {
       const r = await fetch('/api/gmail?url=' + encodeURIComponent(scriptUrl));
       const data = await r.json();
       window.__gmailRaw = data;
-      const isRealTxn = (t) => {
-        const s = ((t.subject || '') + ' ').toLowerCase();
-        const hasTxnWord = /debited|credited|spent|paid successfully|payment of|transaction of|withdrawn|purchased|transferred|money received|upi ref|a\/c|deducted/.test(s);
-        const isPromo = /offer|sale|discount|deal|save|% off|cashback eligible|congratulations|win |reward|earn|lucky|exclusive|limited time|coupon|voucher|subscription|newsletter|keep your|try |invitation|available now|\bflat\b|activate|reminder|due soon|renewal|expire/.test(s);
-        return hasTxnWord && !isPromo;
+      const isRealTxn = function(t) {
+        const s = String(t.subject || '').toLowerCase();
+        const txnWords = ['debited', 'credited', 'spent', 'withdrawn', 'purchased', 'deducted', 'transferred', 'payment of', 'received rs', 'received inr'];
+        const promoWords = ['offer', 'sale', 'discount', 'deal', '% off', 'cashback', 'congratulations', 'reward', 'earn', 'lucky', 'exclusive', 'coupon', 'voucher', 'subscription', 'newsletter', 'keep your', 'invitation', 'activate', 'reminder', 'renewal', 'expire', 'register', 'welcome'];
+        const hasTxn = txnWords.some(function(w){ return s.indexOf(w) >= 0; });
+        const hasPromo = promoWords.some(function(w){ return s.indexOf(w) >= 0; });
+        return hasTxn && !hasPromo;
       };
       const txns = (data.transactions || [])
         .filter(t => (t.type === 'debit' || t.type === 'credit') && isRealTxn(t))
