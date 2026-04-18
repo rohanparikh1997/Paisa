@@ -2011,8 +2011,14 @@ async function bootstrap() {
       const r = await fetch('/api/gmail?url=' + encodeURIComponent(scriptUrl));
       const data = await r.json();
       window.__gmailRaw = data;
+      const isRealTxn = (t) => {
+        const s = ((t.subject || '') + ' ').toLowerCase();
+        const hasTxnWord = /debited|credited|spent|paid|payment|transaction|withdrawn|purchase|transferred|received|upi|deducted/.test(s);
+        const isPromo = /offer|sale|discount|deal|save|save up|% off|cashback eligible|congratulations|win|reward points|earn|lucky|exclusive|limited time|coupon|voucher|subscription renew|newsletter|try|invitation|available now|\bflat\b/.test(s);
+        return hasTxnWord && !isPromo;
+      };
       const txns = (data.transactions || [])
-        .filter(t => t.type === 'debit')
+        .filter(t => t.type === 'debit' && isRealTxn(t))
         .map((t, i) => ({
           id: i + 1,
           merchant: t.merchant || 'Unknown',
