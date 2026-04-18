@@ -2044,28 +2044,21 @@ async function loadGmail() {
       const data = await r.json();
       window.__gmailRaw = data;
       const hidden = JSON.parse(localStorage.getItem('paisa_hidden') || '[]');
-      const strictTxn = [
-        'debited from', 'credited to', 'has been debited', 'has been credited',
-        'is debited', 'is credited', 'successfully paid', 'you have paid',
-        'paid rs', 'paid inr', 'payment of rs', 'payment of inr',
-        'sent rs', 'sent inr', 'received rs', 'received inr',
-        'txn of rs', 'txn of inr', 'a/c debited', 'a/c credited',
-        'acc debited', 'acc credited', 'alert: you', 'upi transaction',
-      ];
+      const txnWords = ['debited', 'credited', 'spent', 'withdrawn', 'deducted', 'paid', 'sent', 'received', 'purchase', 'transaction'];
       const blockWords = [
-        'offer', 'sale', 'discount', 'deal', '% off', 'cashback', 'congratulations',
-        'reward', 'earn', 'lucky', 'exclusive', 'coupon', 'voucher', 'subscription',
-        'newsletter', 'keep your', 'invitation', 'activate', 'reminder', 'renewal',
-        'expire', 'register', 'welcome', 'promo', 'benefit', 'failed', 'reversed',
-        'otp', 'verify', 'verification', 'statement', 'summary', 'due', 'upcoming',
-        'pre-approved', 'loan', 'emi due', 'investment', 'policy', 'insurance',
+        'offer', 'sale', 'discount', ' deal', '% off', 'cashback', 'congratulations',
+        'reward', 'lucky', 'coupon', 'voucher', 'subscription', 'newsletter',
+        'keep your', 'invitation', 'activate', 'reminder', 'renewal', 'expire',
+        'register', 'welcome', 'promo', 'failed', 'reversed', 'otp', 'verify',
+        'verification', 'statement', 'summary', 'upcoming', 'pre-approved',
+        'loan', 'policy', 'insurance', 'premium due',
       ];
       const isRealTxn = function(t) {
         const subj = String(t.subject || '').toLowerCase();
         const merch = String(t.merchant || '').toLowerCase();
-        const key = (t.ref || '') + '|' + (t.date || '') + '|' + (t.amount || '');
+        const key = (t.ref || '') + '|' + (t.date || '').slice(0,10) + '|' + (t.amount || '');
         if (hidden.indexOf(key) >= 0) return false;
-        const hasTxn = strictTxn.some(function(w){ return subj.indexOf(w) >= 0; });
+        const hasTxn = txnWords.some(function(w){ return subj.indexOf(w) >= 0; });
         const hasBlock = blockWords.some(function(w){ return (subj + ' ' + merch).indexOf(w) >= 0; });
         return hasTxn && !hasBlock;
       };
