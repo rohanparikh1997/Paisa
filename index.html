@@ -2040,7 +2040,7 @@ async function loadGmail() {
     status = 'fetching…';
     showBanner(status);
     try {
-      const r = await fetch('/api/gmail?days=365&url=' + encodeURIComponent(scriptUrl));
+      const r = await fetch('/api/gmail?days=90&url=' + encodeURIComponent(scriptUrl));
       const data = await r.json();
       window.__gmailRaw = data;
       const raw = data.transactions || [];
