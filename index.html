@@ -1487,7 +1487,8 @@ function Onboarding({ onComplete }) {
   const done = () => {
     localStorage.setItem('paisa_email', email || 'you@gmail.com');
     localStorage.setItem('paisa_script_url', scriptUrl);
-    onComplete({ email: email || 'you@gmail.com', scriptUrl, apiKey });
+    localStorage.setItem('paisa_onboarded', '1');
+    window.location.reload();
   };
 
   return (
@@ -1820,7 +1821,7 @@ const TWEAKS = /*EDITMODE-BEGIN*/{
 
 function App() {
   const [active, setActive] = uS('home');
-  const [onboarded, setOnboarded] = uS(false);
+  const [onboarded, setOnboarded] = uS(localStorage.getItem('paisa_onboarded') === '1');
   const [assistantOpen, setAssistantOpen] = uS(false);
   const [theme, setTheme] = uS(TWEAKS.theme);
   const [accent, setAccent] = uS(TWEAKS.accent);
