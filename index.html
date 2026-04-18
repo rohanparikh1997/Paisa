@@ -2013,15 +2013,17 @@ async function bootstrap() {
   if (scriptUrl && scriptUrl.startsWith('https://script.google.com')) {
     status = 'fetching';
     try {
-      const r = await fetch('/api/gmail?url=' + encodeURIComponent(scriptUrl));
+      const r = await fetch('/api/gmail?days=365&url=' + encodeURIComponent(scriptUrl));
       const data = await r.json();
       window.__gmailRaw = data;
       const isRealTxn = function(t) {
-        const s = String(t.subject || '').toLowerCase();
+        const subj = String(t.subject || '').toLowerCase();
+        const merch = String(t.merchant || '').toLowerCase();
+        const blob = subj + ' | ' + merch;
         const txnWords = ['debited', 'credited', 'spent', 'withdrawn', 'purchased', 'deducted', 'transferred', 'payment of', 'received rs', 'received inr'];
-        const promoWords = ['offer', 'sale', 'discount', 'deal', '% off', 'cashback', 'congratulations', 'reward', 'earn', 'lucky', 'exclusive', 'coupon', 'voucher', 'subscription', 'newsletter', 'keep your', 'invitation', 'activate', 'reminder', 'renewal', 'expire', 'register', 'welcome'];
-        const hasTxn = txnWords.some(function(w){ return s.indexOf(w) >= 0; });
-        const hasPromo = promoWords.some(function(w){ return s.indexOf(w) >= 0; });
+        const promoWords = ['offer', 'sale', 'discount', 'deal', '% off', 'cashback', 'congratulations', 'reward', 'earn', 'lucky', 'exclusive', 'coupon', 'voucher', 'subscription', 'newsletter', 'keep your', 'invitation', 'activate', 'reminder', 'renewal', 'expire', 'register', 'welcome', 'promo', 'benefit'];
+        const hasTxn = txnWords.some(function(w){ return subj.indexOf(w) >= 0; });
+        const hasPromo = promoWords.some(function(w){ return blob.indexOf(w) >= 0; });
         return hasTxn && !hasPromo;
       };
       const txns = (data.transactions || [])
