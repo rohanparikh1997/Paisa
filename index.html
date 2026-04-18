@@ -1985,7 +1985,46 @@ function BottomNav({ active, onChange }) {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+function inferCategory(merchant) {
+  const m = (merchant || '').toLowerCase();
+  if (/zomato|swiggy|starbucks|cafe|mcdonald|dominos|pizza|restaurant|eat|food/.test(m)) return 'Food';
+  if (/amazon|flipkart|myntra|ajio|shop|mall|store|nykaa/.test(m)) return 'Shopping';
+  if (/uber|ola|rapido|metro|petrol|fuel|transport/.test(m)) return 'Transport';
+  if (/bookmyshow|netflix|spotify|hotstar|prime|movie|cinema/.test(m)) return 'Entertainment';
+  if (/zepto|blinkit|bigbasket|instamart|dmart|grocery/.test(m)) return 'Groceries';
+  if (/airtel|jio|vi |bsnl|bescom|electricity|gas|water|bill/.test(m)) return 'Bills';
+  if (/apollo|pharmacy|hospital|clinic|cult|gym|fitness/.test(m)) return 'Health';
+  if (/rent|landlord|lease/.test(m)) return 'Rent';
+  return 'Shopping';
+}
+
+async function bootstrap() {
+  const scriptUrl = localStorage.getItem('paisa_script_url');
+  if (scriptUrl && scriptUrl.startsWith('https://script.google.com')) {
+    try {
+      const r = await fetch('/api/gmail?url=' + encodeURIComponent(scriptUrl));
+      const data = await r.json();
+      const txns = (data.transactions || [])
+        .filter(t => t.type === 'debit')
+        .map((t, i) => ({
+          id: i + 1,
+          merchant: t.merchant || 'Unknown',
+          cat: inferCategory(t.merchant),
+          amount: t.amount,
+          date: (t.date || '').slice(0, 10),
+          bank: t.bank,
+          src: 'gmail',
+          note: t.subject || '',
+          ref: t.ref || '',
+        }));
+      if (txns.length) window.DATA.TXNS = txns;
+    } catch (e) {
+      console.warn('Gmail sync failed:', e);
+    }
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+}
+bootstrap();
 
 </script>
 
