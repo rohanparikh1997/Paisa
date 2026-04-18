@@ -2043,46 +2043,46 @@ async function loadGmail() {
       const r = await fetch('/api/gmail?days=365&url=' + encodeURIComponent(scriptUrl));
       const data = await r.json();
       window.__gmailRaw = data;
-      const hidden = JSON.parse(localStorage.getItem('paisa_hidden') || '[]');
-      const txnWords = ['debited', 'credited', 'spent', 'withdrawn', 'deducted', 'paid', 'sent', 'received', 'purchase', 'transaction'];
-      const blockWords = [
-        'offer', 'sale', 'discount', ' deal', '% off', 'cashback', 'congratulations',
-        'reward', 'lucky', 'coupon', 'voucher', 'subscription', 'newsletter',
-        'keep your', 'invitation', 'activate', 'reminder', 'renewal', 'expire',
-        'register', 'welcome', 'promo', 'failed', 'reversed', 'otp', 'verify',
-        'verification', 'statement', 'summary', 'upcoming', 'pre-approved',
-        'loan', 'policy', 'insurance', 'premium due',
-      ];
-      const isRealTxn = function(t) {
-        const subj = String(t.subject || '').toLowerCase();
-        const merch = String(t.merchant || '').toLowerCase();
-        const key = (t.ref || '') + '|' + (t.date || '').slice(0,10) + '|' + (t.amount || '');
-        if (hidden.indexOf(key) >= 0) return false;
-        const hasTxn = txnWords.some(function(w){ return subj.indexOf(w) >= 0; });
-        const hasBlock = blockWords.some(function(w){ return (subj + ' ' + merch).indexOf(w) >= 0; });
-        return hasTxn && !hasBlock;
-      };
-      const txns = (data.transactions || [])
-        .filter(t => (t.type === 'debit' || t.type === 'credit') && isRealTxn(t))
-        .map((t, i) => ({
-          id: i + 1,
-          merchant: t.merchant || 'Unknown',
-          cat: inferCategory(t.merchant),
-          amount: t.amount,
-          type: t.type,
-          date: (t.date || '').slice(0, 10),
-          bank: t.bank,
-          src: 'gmail',
-          note: t.subject || '',
-          ref: t.ref || '',
-          hideKey: (t.ref || '') + '|' + (t.date || '').slice(0, 10) + '|' + (t.amount || ''),
-        }));
-      if (txns.length) {
-        window.DATA.TXNS = txns;
-        status = 'loaded:' + txns.length;
-        sessionStorage.setItem('paisa_gmail_txns', JSON.stringify(txns));
+      const raw = data.transactions || [];
+      if (!raw.length) {
+        status = 'empty — no emails found';
       } else {
-        status = 'empty';
+        showBanner('parsing ' + raw.length + ' emails via AI…');
+        const emails = raw.map(t => ({ subject: t.subject || '', date: (t.date || '').slice(0, 10) }));
+        const pr = await fetch('/api/parse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emails }),
+        });
+        const pj = await pr.json();
+        if (pj.error) throw new Error('parse: ' + pj.error);
+        const hidden = JSON.parse(localStorage.getItem('paisa_hidden') || '[]');
+        const txns = (pj.txns || [])
+          .filter(p => p && !p.skip && p.amount && p.merchant)
+          .map((p, i) => {
+            const hideKey = (p.ref || '') + '|' + (p.date || '') + '|' + p.amount;
+            return {
+              id: i + 1,
+              merchant: p.merchant,
+              cat: inferCategory(p.merchant),
+              amount: Number(p.amount),
+              type: p.type || 'debit',
+              date: p.date || new Date().toISOString().slice(0, 10),
+              bank: p.bank || 'Bank',
+              src: 'gmail',
+              note: '',
+              ref: p.ref || '',
+              hideKey,
+            };
+          })
+          .filter(t => hidden.indexOf(t.hideKey) < 0);
+        if (txns.length) {
+          window.DATA.TXNS = txns;
+          status = 'loaded:' + txns.length;
+          sessionStorage.setItem('paisa_gmail_txns', JSON.stringify(txns));
+        } else {
+          status = 'empty — all filtered';
+        }
       }
     } catch (e) {
       status = 'error:' + e.message;
