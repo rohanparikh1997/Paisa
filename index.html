@@ -2018,17 +2018,18 @@ async function bootstrap() {
       window.__gmailRaw = data;
       const isRealTxn = (t) => {
         const s = ((t.subject || '') + ' ').toLowerCase();
-        const hasTxnWord = /debited|credited|spent|paid|payment|transaction|withdrawn|purchase|transferred|received|upi|deducted/.test(s);
-        const isPromo = /offer|sale|discount|deal|save|save up|% off|cashback eligible|congratulations|win|reward points|earn|lucky|exclusive|limited time|coupon|voucher|subscription renew|newsletter|try|invitation|available now|\bflat\b/.test(s);
+        const hasTxnWord = /debited|credited|spent|paid successfully|payment of|transaction of|withdrawn|purchased|transferred|money received|upi ref|a\/c|deducted/.test(s);
+        const isPromo = /offer|sale|discount|deal|save|% off|cashback eligible|congratulations|win |reward|earn|lucky|exclusive|limited time|coupon|voucher|subscription|newsletter|keep your|try |invitation|available now|\bflat\b|activate|reminder|due soon|renewal|expire/.test(s);
         return hasTxnWord && !isPromo;
       };
       const txns = (data.transactions || [])
-        .filter(t => t.type === 'debit' && isRealTxn(t))
+        .filter(t => (t.type === 'debit' || t.type === 'credit') && isRealTxn(t))
         .map((t, i) => ({
           id: i + 1,
           merchant: t.merchant || 'Unknown',
           cat: inferCategory(t.merchant),
           amount: t.amount,
+          type: t.type,
           date: (t.date || '').slice(0, 10),
           bank: t.bank,
           src: 'gmail',
