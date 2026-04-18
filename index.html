@@ -2007,11 +2007,24 @@ function inferCategory(merchant) {
   return 'Shopping';
 }
 
-async function bootstrap() {
+function showBanner(text) {
+  let b = document.getElementById('__gbanner');
+  if (!b) {
+    b = document.createElement('div');
+    b.id = '__gbanner';
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#000;color:#0f0;font:11px monospace;padding:4px;z-index:99999;text-align:center;';
+    b.onclick = () => b.remove();
+    document.body.appendChild(b);
+  }
+  b.textContent = 'Gmail: ' + text;
+}
+
+async function loadGmail() {
   const scriptUrl = localStorage.getItem('paisa_script_url');
   let status = 'no-url';
   if (scriptUrl && scriptUrl.startsWith('https://script.google.com')) {
-    status = 'fetching';
+    status = 'fetching…';
+    showBanner(status);
     try {
       const r = await fetch('/api/gmail?days=365&url=' + encodeURIComponent(scriptUrl));
       const data = await r.json();
@@ -2043,22 +2056,28 @@ async function bootstrap() {
       if (txns.length) {
         window.DATA.TXNS = txns;
         status = 'loaded:' + txns.length;
+        sessionStorage.setItem('paisa_gmail_txns', JSON.stringify(txns));
       } else {
-        status = 'empty:' + JSON.stringify(data).slice(0, 200);
+        status = 'empty';
       }
     } catch (e) {
       status = 'error:' + e.message;
     }
   }
-  window.__gmailStatus = status;
-  const banner = document.createElement('div');
-  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#000;color:#0f0;font:11px monospace;padding:4px;z-index:99999;text-align:center;';
-  banner.textContent = 'Gmail: ' + status;
-  banner.onclick = () => banner.remove();
-  document.body.appendChild(banner);
-  ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  showBanner(status);
+  return status;
 }
-bootstrap();
+
+const cached = sessionStorage.getItem('paisa_gmail_txns');
+if (cached) {
+  try { window.DATA.TXNS = JSON.parse(cached); } catch (e) {}
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+loadGmail().then((s) => {
+  if (s && s.indexOf('loaded') === 0 && !cached) {
+    setTimeout(() => location.reload(), 600);
+  }
+});
 
 </script>
 
