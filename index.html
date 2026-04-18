@@ -1821,7 +1821,10 @@ const TWEAKS = /*EDITMODE-BEGIN*/{
 
 function App() {
   const [active, setActive] = uS('home');
-  const [onboarded, setOnboarded] = uS(localStorage.getItem('paisa_onboarded') === '1');
+  const [onboarded, setOnboarded] = uS(
+    localStorage.getItem('paisa_onboarded') === '1' &&
+    !!localStorage.getItem('paisa_script_url')
+  );
   const [assistantOpen, setAssistantOpen] = uS(false);
   const [theme, setTheme] = uS(TWEAKS.theme);
   const [accent, setAccent] = uS(TWEAKS.accent);
