@@ -688,6 +688,16 @@ function WeekChart() {
 
 function TxnRow({ txn, divider, onClick }) {
   const D = window.DATA;
+  const hide = function(e) {
+    e.stopPropagation();
+    if (!txn.hideKey) return;
+    if (!confirm('Hide this transaction (' + txn.merchant + ' ₹' + txn.amount + ')?')) return;
+    const hidden = JSON.parse(localStorage.getItem('paisa_hidden') || '[]');
+    if (hidden.indexOf(txn.hideKey) < 0) hidden.push(txn.hideKey);
+    localStorage.setItem('paisa_hidden', JSON.stringify(hidden));
+    sessionStorage.removeItem('paisa_gmail_txns');
+    location.reload();
+  };
   return (
     <div onClick={onClick} style={{
       display:'flex', alignItems:'center', gap:12,
@@ -710,6 +720,10 @@ function TxnRow({ txn, divider, onClick }) {
           <window.I.GmailLogo size={10}/> Gmail
         </div>
       </div>
+      {txn.hideKey && <button onClick={hide} title="Hide" style={{
+        border:'none', background:'transparent', color:'var(--muted)',
+        fontSize:18, cursor:'pointer', padding:'0 4px', marginLeft:4, lineHeight:1,
+      }}>×</button>}
     </div>
   );
 }
@@ -2029,15 +2043,31 @@ async function loadGmail() {
       const r = await fetch('/api/gmail?days=365&url=' + encodeURIComponent(scriptUrl));
       const data = await r.json();
       window.__gmailRaw = data;
+      const hidden = JSON.parse(localStorage.getItem('paisa_hidden') || '[]');
+      const strictTxn = [
+        'debited from', 'credited to', 'has been debited', 'has been credited',
+        'is debited', 'is credited', 'successfully paid', 'you have paid',
+        'paid rs', 'paid inr', 'payment of rs', 'payment of inr',
+        'sent rs', 'sent inr', 'received rs', 'received inr',
+        'txn of rs', 'txn of inr', 'a/c debited', 'a/c credited',
+        'acc debited', 'acc credited', 'alert: you', 'upi transaction',
+      ];
+      const blockWords = [
+        'offer', 'sale', 'discount', 'deal', '% off', 'cashback', 'congratulations',
+        'reward', 'earn', 'lucky', 'exclusive', 'coupon', 'voucher', 'subscription',
+        'newsletter', 'keep your', 'invitation', 'activate', 'reminder', 'renewal',
+        'expire', 'register', 'welcome', 'promo', 'benefit', 'failed', 'reversed',
+        'otp', 'verify', 'verification', 'statement', 'summary', 'due', 'upcoming',
+        'pre-approved', 'loan', 'emi due', 'investment', 'policy', 'insurance',
+      ];
       const isRealTxn = function(t) {
         const subj = String(t.subject || '').toLowerCase();
         const merch = String(t.merchant || '').toLowerCase();
-        const blob = subj + ' | ' + merch;
-        const txnWords = ['debited', 'credited', 'spent', 'withdrawn', 'purchased', 'deducted', 'transferred', 'payment of', 'received rs', 'received inr'];
-        const promoWords = ['offer', 'sale', 'discount', 'deal', '% off', 'cashback', 'congratulations', 'reward', 'earn', 'lucky', 'exclusive', 'coupon', 'voucher', 'subscription', 'newsletter', 'keep your', 'invitation', 'activate', 'reminder', 'renewal', 'expire', 'register', 'welcome', 'promo', 'benefit'];
-        const hasTxn = txnWords.some(function(w){ return subj.indexOf(w) >= 0; });
-        const hasPromo = promoWords.some(function(w){ return blob.indexOf(w) >= 0; });
-        return hasTxn && !hasPromo;
+        const key = (t.ref || '') + '|' + (t.date || '') + '|' + (t.amount || '');
+        if (hidden.indexOf(key) >= 0) return false;
+        const hasTxn = strictTxn.some(function(w){ return subj.indexOf(w) >= 0; });
+        const hasBlock = blockWords.some(function(w){ return (subj + ' ' + merch).indexOf(w) >= 0; });
+        return hasTxn && !hasBlock;
       };
       const txns = (data.transactions || [])
         .filter(t => (t.type === 'debit' || t.type === 'credit') && isRealTxn(t))
@@ -2052,6 +2082,7 @@ async function loadGmail() {
           src: 'gmail',
           note: t.subject || '',
           ref: t.ref || '',
+          hideKey: (t.ref || '') + '|' + (t.date || '').slice(0, 10) + '|' + (t.amount || ''),
         }));
       if (txns.length) {
         window.DATA.TXNS = txns;
