@@ -14,7 +14,17 @@ You will receive an array of emails. For EACH email return ONE object in the sam
   "ref": "string or null"
 }
 
-If the email is NOT a real completed transaction, return: {"i": <index>, "skip": true, "reason": "otp|promo|statement|reminder|login|other"}
+STRICT INCLUSION RULE — only return a transaction if the email body explicitly contains one of these exact phrases (case-insensitive):
+- "debited from your" / "debited from a/c" / "debited from acct"
+- "credited to your" / "credited to a/c" / "credited to acct"
+- "has been debited" / "has been credited"
+- "has been paid" / "you have paid"
+- "received in your" / "received from"
+- "spent on your" / "withdrawn from your"
+
+Prefer UPI / bank account transactions. Skip anything that doesn't have one of these explicit phrases.
+
+For everything else (OTPs, offers, sales, cashback nudges, statements, reminders, EMI offers, insurance reminders, login alerts, KYC, "keep your subscription active", failed/reversed/pending) return: {"i": <index>, "skip": true, "reason": "otp|promo|statement|reminder|login|other"}
 
 DEBIT vs CREDIT:
 - debited / spent / charged / paid / withdrawn / deducted / used for transaction → debit
