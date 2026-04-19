@@ -2005,11 +2005,11 @@ function showBanner(text) {
   if (!b) {
     b = document.createElement('div');
     b.id = '__gbanner';
-    b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#000;color:#0f0;font:11px monospace;padding:4px;z-index:99999;text-align:center;';
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#000;color:#0f0;font:14px monospace;padding:14px 12px;z-index:99999;text-align:center;font-weight:700;line-height:1.3;word-break:break-word;border-bottom:2px solid #0f0;';
     b.onclick = () => b.remove();
     document.body.appendChild(b);
   }
-  b.textContent = 'Gmail: ' + text;
+  b.textContent = 'Gmail: ' + text + ' (tap to dismiss)';
 }
 
 async function loadGmail() {
@@ -2020,23 +2020,29 @@ async function loadGmail() {
     showBanner(status);
     try {
       const r = await fetch('/api/gmail?days=60&url=' + encodeURIComponent(scriptUrl));
+      if (!r.ok) throw new Error('gmail HTTP ' + r.status);
       const data = await r.json();
       window.__gmailRaw = data;
+      if (data.error) throw new Error('gmail: ' + data.error);
       const raw = data.transactions || [];
       if (!raw.length) {
-        status = 'empty — no emails found';
+        status = 'gmail returned 0 emails (Apps Script not finding bank alerts)';
       } else {
-        showBanner('parsing ' + raw.length + ' emails via AI…');
+        showBanner('got ' + raw.length + ' emails, sending to Claude…');
         const emails = raw.map(t => ({ subject: t.subject || '', body: t.body || '', date: (t.date || '').slice(0, 10) }));
         const pr = await fetch('/api/parse', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ emails }),
         });
+        if (!pr.ok) throw new Error('parse HTTP ' + pr.status);
         const pj = await pr.json();
         if (pj.error) throw new Error('parse: ' + pj.error);
+        const allParsed = pj.txns || [];
+        const skipped = allParsed.filter(p => p.skip).length;
+        const errored = allParsed.filter(p => p.batchError).length;
         const hidden = JSON.parse(localStorage.getItem('paisa_hidden') || '[]');
-        const txns = (pj.txns || [])
+        const txns = allParsed
           .filter(p => p && !p.skip && p.amount && p.merchant)
           .map((p, i) => {
             const hideKey = (p.ref || '') + '|' + (p.date || '') + '|' + p.amount;
@@ -2057,14 +2063,14 @@ async function loadGmail() {
           .filter(t => hidden.indexOf(t.hideKey) < 0);
         if (txns.length) {
           window.DATA.TXNS = txns;
-          status = 'loaded:' + txns.length;
+          status = 'loaded ' + txns.length + ' / ' + raw.length + ' emails (skipped:' + skipped + ', errors:' + errored + ')';
           sessionStorage.setItem('paisa_gmail_txns', JSON.stringify(txns));
         } else {
-          status = 'empty — all filtered';
+          status = '0 valid txns from ' + raw.length + ' emails (skipped:' + skipped + ', errors:' + errored + ')';
         }
       }
     } catch (e) {
-      status = 'error:' + e.message;
+      status = 'ERROR: ' + e.message;
     }
   }
   showBanner(status);
