@@ -2019,7 +2019,7 @@ async function loadGmail() {
     status = 'fetching…';
     showBanner(status);
     try {
-      const r = await fetch('/api/gmail?days=60&url=' + encodeURIComponent(scriptUrl));
+      const r = await fetch('/api/gmail?days=30&url=' + encodeURIComponent(scriptUrl));
       if (!r.ok) throw new Error('gmail HTTP ' + r.status);
       const data = await r.json();
       window.__gmailRaw = data;
