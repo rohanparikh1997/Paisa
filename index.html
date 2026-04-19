@@ -340,29 +340,8 @@ const BUDGETS = {
   Rent:         22000,
 };
 
-// Transactions — parsed from Gmail (mock). April 2026.
-const TXNS = [
-  { id: 1, merchant: 'Zomato',         cat: 'Food',          amount: 480,   date: '2026-04-17', bank: 'HDFC', src: 'gmail', note: 'Biryani Blues · Koramangala', ref: 'UPI/P2M/6342' },
-  { id: 2, merchant: 'Amazon',         cat: 'Shopping',      amount: 1299,  date: '2026-04-17', bank: 'ICICI', src: 'gmail', note: 'Bluetooth earphones', ref: 'ORD-782156' },
-  { id: 3, merchant: 'Uber',           cat: 'Transport',     amount: 220,   date: '2026-04-17', bank: 'HDFC', src: 'gmail', note: 'Ride to Indiranagar', ref: 'UPI/P2M/6340' },
-  { id: 4, merchant: 'BESCOM',         cat: 'Bills',         amount: 1850,  date: '2026-04-16', bank: 'HDFC', src: 'gmail', note: 'Electricity bill · Apr', ref: 'BILL/834' },
-  { id: 5, merchant: 'Swiggy Instamart',cat: 'Groceries',    amount: 742,   date: '2026-04-16', bank: 'ICICI', src: 'gmail', note: 'Weekly groceries', ref: 'UPI/P2M/1200' },
-  { id: 6, merchant: 'BookMyShow',     cat: 'Entertainment', amount: 680,   date: '2026-04-15', bank: 'HDFC', src: 'gmail', note: 'Movie · PVR Forum', ref: 'BMS-33812' },
-  { id: 7, merchant: 'Starbucks',      cat: 'Food',          amount: 385,   date: '2026-04-15', bank: 'HDFC', src: 'gmail', note: 'Americano + Croissant', ref: 'UPI/P2M/6301' },
-  { id: 8, merchant: 'Apollo Pharmacy',cat: 'Health',        amount: 420,   date: '2026-04-14', bank: 'ICICI', src: 'gmail', note: 'Prescription refill', ref: 'APOL-122' },
-  { id: 9, merchant: 'Netflix',        cat: 'Entertainment', amount: 649,   date: '2026-04-14', bank: 'HDFC', src: 'gmail', note: 'Monthly subscription', ref: 'NFX-APR26' },
-  { id:10, merchant: 'Uber',           cat: 'Transport',     amount: 340,   date: '2026-04-13', bank: 'HDFC', src: 'gmail', note: 'Airport drop', ref: 'UPI/P2M/6280' },
-  { id:11, merchant: 'Zepto',          cat: 'Groceries',     amount: 512,   date: '2026-04-13', bank: 'ICICI', src: 'gmail', note: 'Fruits + Bread', ref: 'ZEP-9912' },
-  { id:12, merchant: 'Zomato',         cat: 'Food',          amount: 620,   date: '2026-04-12', bank: 'HDFC', src: 'gmail', note: 'Dinner · Truffles', ref: 'UPI/P2M/6245' },
-  { id:13, merchant: 'Amazon',         cat: 'Shopping',      amount: 2490,  date: '2026-04-12', bank: 'ICICI', src: 'gmail', note: 'Running shoes', ref: 'ORD-771240' },
-  { id:14, merchant: 'Airtel',         cat: 'Bills',         amount: 799,   date: '2026-04-11', bank: 'HDFC', src: 'gmail', note: 'Mobile recharge', ref: 'ATL-7781' },
-  { id:15, merchant: 'Landlord',       cat: 'Rent',          amount: 22000, date: '2026-04-05', bank: 'HDFC', src: 'gmail', note: 'Apartment · April', ref: 'NEFT/RENT' },
-  { id:16, merchant: 'Cult.fit',       cat: 'Health',        amount: 1499,  date: '2026-04-04', bank: 'ICICI', src: 'gmail', note: 'Gym membership', ref: 'CULT-8821' },
-  { id:17, merchant: 'Blinkit',        cat: 'Groceries',     amount: 340,   date: '2026-04-03', bank: 'HDFC', src: 'gmail', note: 'Late-night snacks', ref: 'BLK-552' },
-  { id:18, merchant: 'Zomato',         cat: 'Food',          amount: 295,   date: '2026-04-02', bank: 'HDFC', src: 'gmail', note: 'Lunch · McDonald\'s', ref: 'UPI/P2M/6122' },
-  { id:19, merchant: 'Myntra',         cat: 'Shopping',      amount: 1650,  date: '2026-04-01', bank: 'ICICI', src: 'gmail', note: 'Summer t-shirts', ref: 'MYN-44103' },
-  { id:20, merchant: 'Spotify',        cat: 'Entertainment', amount: 119,   date: '2026-04-01', bank: 'HDFC', src: 'gmail', note: 'Premium · monthly', ref: 'SPT-APR' },
-];
+// Transactions — populated from Gmail at runtime by bootstrap(). No mock data.
+const TXNS = [];
 
 // 7-day spending for sparkline
 const WEEK = [
