@@ -71,6 +71,7 @@ function parseEmail(msg) {
     date: date.toISOString(),
     ref,
     subject,
+    body: body.slice(0, 800),
   };
 }
 

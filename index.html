@@ -2048,7 +2048,7 @@ async function loadGmail() {
         status = 'empty — no emails found';
       } else {
         showBanner('parsing ' + raw.length + ' emails via AI…');
-        const emails = raw.map(t => ({ subject: t.subject || '', date: (t.date || '').slice(0, 10) }));
+        const emails = raw.map(t => ({ subject: t.subject || '', body: t.body || '', date: (t.date || '').slice(0, 10) }));
         const pr = await fetch('/api/parse', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
