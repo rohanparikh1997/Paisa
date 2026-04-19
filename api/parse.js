@@ -15,14 +15,22 @@ You will receive an array of emails. For EACH email return ONE object in the sam
 }
 
 STRICT INCLUSION RULE — only return a transaction if the email body explicitly contains one of these exact phrases (case-insensitive):
-- "debited from your" / "debited from a/c" / "debited from acct"
-- "credited to your" / "credited to a/c" / "credited to acct"
+- "debited from account" / "debited from your" / "debited from a/c" / "debited from acct"
+- "credited to account" / "credited to your" / "credited to a/c" / "credited to acct"
 - "has been debited" / "has been credited"
 - "has been paid" / "you have paid"
 - "received in your" / "received from"
 - "spent on your" / "withdrawn from your"
 
 Prefer UPI / bank account transactions. Skip anything that doesn't have one of these explicit phrases.
+
+EXAMPLE INPUT:
+[0] receivedDate=2026-04-18
+subject: You have done a UPI txn. Check details!
+body: Dear Customer, Rs.199.00 has been debited from account 4522 to VPA netflixupi.payu@hdfcbank NETFLIX COM on 18-04-26. Your UPI transaction reference number is 103130645301...
+
+EXAMPLE OUTPUT:
+{"txns":[{"i":0,"merchant":"Netflix","amount":199.00,"date":"2026-04-18","bank":"HDFC","type":"debit","ref":"103130645301"}]}
 
 For everything else (OTPs, offers, sales, cashback nudges, statements, reminders, EMI offers, insurance reminders, login alerts, KYC, "keep your subscription active", failed/reversed/pending) return: {"i": <index>, "skip": true, "reason": "otp|promo|statement|reminder|login|other"}
 
