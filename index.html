@@ -2015,6 +2015,21 @@ function showBanner(text) {
 async function loadGmail() {
   const scriptUrl = localStorage.getItem('paisa_script_url');
   let status = 'no-url';
+  // Cache for 6 hours to avoid burning Gmail quota
+  const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+  const cachedAt = parseInt(localStorage.getItem('paisa_txns_at') || '0');
+  const cachedTxns = localStorage.getItem('paisa_txns_cache');
+  if (cachedTxns && (Date.now() - cachedAt) < CACHE_TTL_MS) {
+    try {
+      const txns = JSON.parse(cachedTxns);
+      if (txns.length) {
+        window.DATA.TXNS = txns;
+        const ageMin = Math.round((Date.now() - cachedAt) / 60000);
+        showBanner('using cached data (' + txns.length + ' txns, ' + ageMin + 'm old). Tap to refresh.');
+        return 'cached:' + txns.length;
+      }
+    } catch (e) {}
+  }
   if (scriptUrl && scriptUrl.startsWith('https://script.google.com')) {
     status = 'fetching…';
     showBanner(status);
@@ -2065,6 +2080,8 @@ async function loadGmail() {
           window.DATA.TXNS = txns;
           status = 'loaded ' + txns.length + ' / ' + raw.length + ' emails (skipped:' + skipped + ', errors:' + errored + ')';
           sessionStorage.setItem('paisa_gmail_txns', JSON.stringify(txns));
+          localStorage.setItem('paisa_txns_cache', JSON.stringify(txns));
+          localStorage.setItem('paisa_txns_at', String(Date.now()));
         } else {
           status = '0 valid txns from ' + raw.length + ' emails (skipped:' + skipped + ', errors:' + errored + ')';
         }
