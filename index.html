@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>window.PAISA_GOOGLE_CLIENT_ID = '259010890696-fmkpmi8t37at96c9lsdqel6uvohnjib2.apps.googleusercontent.com';</script>
 <style>
   :root {
     /* Base palette shared across themes */
@@ -1107,9 +1109,12 @@ function Settings({ onReset }) {
         background:'var(--surface)', borderRadius:'var(--r)', padding:'18px',
         marginBottom:14, border:'1px solid var(--hair)', display:'flex', alignItems:'center', gap:14
       }}>
-        <div style={{ width:52, height:52, borderRadius:'50%', background:'linear-gradient(135deg, var(--saffron), var(--saffron-ink))', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Baloo 2', cursive", fontSize:22, fontWeight:800 }}>{(localStorage.getItem('paisa_email') || 'Y')[0].toUpperCase()}</div>
+        {localStorage.getItem('paisa_picture')
+          ? <img src={localStorage.getItem('paisa_picture')} alt="" style={{ width:52, height:52, borderRadius:'50%', objectFit:'cover' }}/>
+          : <div style={{ width:52, height:52, borderRadius:'50%', background:'linear-gradient(135deg, var(--saffron), var(--saffron-ink))', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Baloo 2', cursive", fontSize:22, fontWeight:800 }}>{(localStorage.getItem('paisa_email') || 'Y')[0].toUpperCase()}</div>
+        }
         <div style={{ flex:1 }}>
-          <div style={{ fontSize:15, fontWeight:700, color:'var(--ink)' }}>{(localStorage.getItem('paisa_email') || 'you@gmail.com').split('@')[0]}</div>
+          <div style={{ fontSize:15, fontWeight:700, color:'var(--ink)' }}>{localStorage.getItem('paisa_name') || (localStorage.getItem('paisa_email') || 'you@gmail.com').split('@')[0]}</div>
           <div style={{ fontSize:12, color:'var(--muted)' }}>{localStorage.getItem('paisa_email') || 'you@gmail.com'}</div>
         </div>
         <I.ChevronRight size={18} stroke="var(--muted)"/>
@@ -1467,7 +1472,7 @@ const { useState } = React;
 
 function Onboarding({ onComplete }) {
   const [step, setStep] = useState(0);
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(localStorage.getItem('paisa_email') || '');
   const [scriptUrl, setScriptUrl] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [connecting, setConnecting] = useState(false);
@@ -1483,7 +1488,7 @@ function Onboarding({ onComplete }) {
   };
 
   const done = () => {
-    localStorage.setItem('paisa_email', email || 'you@gmail.com');
+    if (email) localStorage.setItem('paisa_email', email);
     localStorage.setItem('paisa_script_url', scriptUrl);
     localStorage.setItem('paisa_onboarded', '1');
     window.location.reload();
@@ -1527,7 +1532,47 @@ function Onboarding({ onComplete }) {
   );
 }
 
+function decodeGoogleJWT(token) {
+  try {
+    const payload = token.split('.')[1];
+    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(decodeURIComponent(escape(json)));
+  } catch (e) { return null; }
+}
+
 function StepWelcome({ onNext }) {
+  const btnRef = React.useRef(null);
+  const [signedIn, setSignedIn] = React.useState(!!localStorage.getItem('paisa_email'));
+
+  React.useEffect(() => {
+    if (signedIn) return;
+    let tries = 0;
+    const tick = setInterval(() => {
+      tries++;
+      if (window.google && window.google.accounts && window.google.accounts.id && btnRef.current) {
+        clearInterval(tick);
+        window.google.accounts.id.initialize({
+          client_id: window.PAISA_GOOGLE_CLIENT_ID,
+          callback: (response) => {
+            const profile = decodeGoogleJWT(response.credential);
+            if (!profile || !profile.email) return;
+            localStorage.setItem('paisa_email', profile.email);
+            localStorage.setItem('paisa_name', profile.name || '');
+            localStorage.setItem('paisa_picture', profile.picture || '');
+            setSignedIn(true);
+            setTimeout(onNext, 400);
+          },
+        });
+        window.google.accounts.id.renderButton(btnRef.current, {
+          theme: 'filled_black', size: 'large', shape: 'pill', text: 'continue_with', width: 280,
+        });
+      } else if (tries > 50) {
+        clearInterval(tick);
+      }
+    }, 100);
+    return () => clearInterval(tick);
+  }, [signedIn]);
+
   return (
     <div style={{ flex:1, display:'flex', flexDirection:'column' }}>
       <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center', textAlign:'center' }}>
@@ -1560,7 +1605,13 @@ function StepWelcome({ onNext }) {
         </div>
       </div>
 
-      <button onClick={onNext} style={primaryBtn}>Get started</button>
+      {signedIn ? (
+        <button onClick={onNext} style={primaryBtn}>Continue as {localStorage.getItem('paisa_name') || localStorage.getItem('paisa_email')}</button>
+      ) : (
+        <div style={{ display:'flex', justifyContent:'center', minHeight:48 }}>
+          <div ref={btnRef}/>
+        </div>
+      )}
       <div style={{ textAlign:'center', fontSize:12, color:'var(--muted)', marginTop:12 }}>
         🔒 Your data stays on this device
       </div>
